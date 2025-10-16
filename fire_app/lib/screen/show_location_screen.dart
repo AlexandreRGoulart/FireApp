@@ -270,39 +270,161 @@ Marker _buildSharedLocationMarker(SharedLocation location) {
   );
 }
 
-  void _showLocationDetails(SharedLocation location) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(location.name),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(location.description),
-            SizedBox(height: 8),
-            Text(
-              'Coordenadas: ${location.lat.toStringAsFixed(4)}, ${location.lng.toStringAsFixed(4)}',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Fechar'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _setDestinationFromSharedLocation(location);
-            },
-            child: Text('Traçar Rota'),
+Widget _buildImageFromBase64(String base64String, {double height = 200}) {
+  if (base64String.isEmpty) {
+    return Container(
+      height: height,
+      width: double.infinity,
+      color: Colors.grey[200],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.photo, size: 50, color: Colors.grey[400]),
+          SizedBox(height: 8),
+          Text(
+            'Sem imagem',
+            style: TextStyle(color: Colors.grey[500]),
           ),
         ],
       ),
     );
   }
+
+  try {
+    // Decodifica o Base64 para bytes
+    Uint8List bytes = base64Decode(base64String);
+    
+    return Container(
+      height: height,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          )
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.red[50],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, color: Colors.red, size: 40),
+                  SizedBox(height: 8),
+                  Text(
+                    'Erro ao carregar imagem',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  } catch (e) {
+    print('❌ Erro ao decodificar Base64: $e');
+    return Container(
+      height: height,
+      width: double.infinity,
+      color: Colors.orange[50],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.warning, color: Colors.orange, size: 40),
+          SizedBox(height: 8),
+          Text(
+            'Formato inválido',
+            style: TextStyle(color: Colors.orange[800]),
+          ),
+          SizedBox(height: 4),
+          Text(
+            '${base64String.length} caracteres',
+            style: TextStyle(fontSize: 10, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _showLocationDetails(SharedLocation location) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(location.name),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ✅ IMAGEM DO BASE64 - SUBSTITUA ESTA PARTE
+            _buildImageFromBase64(location.imageBase64),
+            
+            SizedBox(height: 16),
+            Text(
+              location.description,
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Coordenadas: ${location.lat.toStringAsFixed(4)}, ${location.lng.toStringAsFixed(4)}',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Data: ${DateFormat('dd/MM/yyyy HH:mm').format(location.createdAt)}',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            
+            // ✅ INFO SOBRE O BASE64 (útil para debug)
+            if (location.hasImage)
+              Container(
+                margin: EdgeInsets.only(top: 8),
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info, size: 16, color: Colors.blue),
+                    SizedBox(width: 4),
+                    Text(
+                      'Base64: ${(location.imageBase64.length / 1024).toStringAsFixed(1)}KB',
+                      style: TextStyle(fontSize: 10, color: Colors.blue[800]),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Fechar'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            _setDestinationFromSharedLocation(location);
+          },
+          child: Text('Traçar Rota'),
+        ),
+      ],
+    ),
+  );
+}
 
   void _setDestinationFromSharedLocation(SharedLocation location) {
     setState(() {
