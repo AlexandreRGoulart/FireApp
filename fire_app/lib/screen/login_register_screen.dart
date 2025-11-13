@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB11008), // COR CORRETA DO FIGMA
+      backgroundColor: const Color(0xFFB11008),
 
       body: Center(
         child: SingleChildScrollView(
@@ -54,17 +54,11 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
               // LOGO
-              Image.asset(
-                'assets/logo.png',
-                width: 120,
-              ),
+              Image.asset('assets/logo.png', width: 120),
 
               const SizedBox(height: 40),
 
-
-              // *** CAMPOS SEM BORDA (ESTILO FIGMA) ***
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -88,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                   hintStyle: const TextStyle(color: Colors.white70),
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.10),
-                  border: InputBorder.none, // SEM BORDA
+                  border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 14,
@@ -122,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                   hintStyle: const TextStyle(color: Colors.white70),
                   filled: true,
                   fillColor: Colors.white.withOpacity(0.10),
-                  border: InputBorder.none, // SEM BORDA
+                  border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 14,
@@ -132,7 +126,7 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 10),
 
-              // *** LEMBRAR-ME + ESQUECEU SENHA ***
+              // LEMBRAR-ME + ESQUECEU SENHA
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -165,19 +159,19 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
 
               const SizedBox(height: 20),
 
-              // *** BOTÃO ENTRAR ***
+              // BOTÃO ENTRAR
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF010207),
+                    backgroundColor: const Color(0xFF010207),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -190,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: const TextStyle(
                       fontFamily: "Poppins",
                       fontSize: 18,
-                      color: Color(0xFFB11008),
+                      color: Colors.white, // 👈 AGORA ESTÁ BRANCO 🔥
                     ),
                   ),
                 ),
@@ -204,10 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                   Expanded(child: Divider(color: Colors.white54)),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      "ou",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: Text("ou", style: TextStyle(color: Colors.white)),
                   ),
                   Expanded(child: Divider(color: Colors.white54)),
                 ],
@@ -268,7 +259,7 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
 
