@@ -1,0 +1,7 @@
+class AppRoutes {
+  static const String initial = '/';
+  static const String loginRegister = '/login-register';
+  static const String home = '/home';
+  static const String telaInicial = '/tela-inicial';
+  static const String showLocation = '/show-location';
+}
