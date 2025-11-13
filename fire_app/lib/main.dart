@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fire_app/screen/tela_inicial_screen.dart';  // ⬅️ nova tela inicial
 import 'package:fire_app/screen/widget_tree.dart';
 
 Future<void> main() async {
@@ -16,9 +17,16 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.red
+        primarySwatch: Colors.red,
       ),
-      home: const WidgetTree()
+      
+      // ⬅️ Primeira tela ao abrir o app
+      home: const TelaInicialScreen(),
+      
+      // Rotas opcionais nomeadas
+      routes: {
+        '/widget_tree': (context) => const WidgetTree(),
+      },
     );
   }
 }
