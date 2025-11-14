@@ -47,10 +47,7 @@ class _LoginPageState extends State<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 /// LOGO
-                Image.asset(
-                  'assets/logo.png',
-                  width: 120,
-                ),
+                Image.asset('assets/logo.png', width: 120),
 
                 const SizedBox(height: 40),
 
@@ -93,7 +90,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        // TODO: criar tela de recuperar senha
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.telaRecuperarSenha,
+                        );
                       },
                       child: Text(
                         "Esqueceu sua senha?",

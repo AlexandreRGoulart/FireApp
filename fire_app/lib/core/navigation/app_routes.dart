@@ -5,4 +5,6 @@ class AppRoutes {
   static const String telaInicial = '/tela-inicial';
   static const String showLocation = '/show-location';
   static const String telaCadastro = '/cadastro';
+  static const String telaRecuperarSenha = '/recuperar-senha';
+
 }
