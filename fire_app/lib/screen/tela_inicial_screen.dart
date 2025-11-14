@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fire_app/screen/widget_tree.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 class TelaInicialScreen extends StatefulWidget {
   const TelaInicialScreen({super.key});
@@ -14,7 +16,7 @@ class _TelaInicialScreenState extends State<TelaInicialScreen> {
   void initState() {
     super.initState();
 
-    // Timer de 5 segundos antes de redirecionar para o fluxo normal do app
+    // Timer de Splash
     Timer(const Duration(seconds: 5), () {
       if (!mounted) return;
 
@@ -28,30 +30,26 @@ class _TelaInicialScreenState extends State<TelaInicialScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB11008), // 🔥 Fundo vermelho do Figma
+      backgroundColor: AppColors.primary, // 🔥 vermelho oficial
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // LOGO CENTRAL
+            /// LOGO CENTRAL
             Image.asset(
               'assets/logo.png',
               width: 180,
               height: 180,
-              fit: BoxFit.contain,
             ),
 
             const SizedBox(height: 24),
 
-            // NOME DO APP (cor #010207 do Figma)
-            const Text(
+            /// Nome do App estilizado pelo Design System
+            Text(
               'FireApp',
-              style: TextStyle(
-                fontFamily: 'Poppins',
+              style: AppTextStyles.titleLarge.copyWith(
+                color: AppColors.darkText, // preto 010207 do Figma
                 fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF010207), 
-                letterSpacing: 1.2,
               ),
             ),
           ],

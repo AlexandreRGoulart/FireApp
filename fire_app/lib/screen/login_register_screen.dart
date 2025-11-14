@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth.dart';
 
+// COMPONENTES DO DESIGN SYSTEM
+import '../components/app_input.dart';
+import '../components/app_button.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -20,33 +26,29 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> signInWithEmailAndPassword() async {
     try {
       await Auth().signInWithEmailAndPassword(
-        email: _controllerEmail.text,
-        password: _controllerPassword.text,
+        email: _controllerEmail.text.trim(),
+        password: _controllerPassword.text.trim(),
       );
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        errorMessage = e.message;
-      });
+      setState(() => errorMessage = e.message);
     }
   }
 
   Future<void> createUserWithEmailAndPassword() async {
     try {
       await Auth().createUserWithEmailAndPassword(
-        email: _controllerEmail.text,
-        password: _controllerPassword.text,
+        email: _controllerEmail.text.trim(),
+        password: _controllerPassword.text.trim(),
       );
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        errorMessage = e.message;
-      });
+      setState(() => errorMessage = e.message);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFB11008),
+      backgroundColor: AppColors.primary, // vermelho oficial
 
       body: Center(
         child: SingleChildScrollView(
@@ -54,79 +56,32 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // LOGO
+              /// LOGO
               Image.asset('assets/logo.png', width: 120),
 
               const SizedBox(height: 40),
 
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "E-mail",
-                  style: const TextStyle(
-                    fontFamily: "Poppins",
-                    fontSize: 15,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              TextField(
+              /// INPUT EMAIL (AppInput)
+              AppInput(
+                label: "E-mail",
+                hint: "Digite seu e-mail",
                 controller: _controllerEmail,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Digite seu e-mail",
-                  hintStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.10),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 14,
-                  ),
-                ),
+                keyboardType: TextInputType.emailAddress,
               ),
 
               const SizedBox(height: 20),
 
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Senha",
-                  style: const TextStyle(
-                    fontFamily: "Poppins",
-                    fontSize: 15,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              TextField(
+              /// INPUT SENHA (AppInput)
+              AppInput(
+                label: "Senha",
+                hint: "Digite sua senha",
                 controller: _controllerPassword,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: "Digite sua senha",
-                  hintStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.10),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 14,
-                  ),
-                ),
+                obscure: true,
               ),
 
               const SizedBox(height: 10),
 
-              // LEMBRAR-ME + ESQUECEU SENHA
+              /// LEMBRAR-ME + ESQUECEU SENHA
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -135,29 +90,17 @@ class _LoginPageState extends State<LoginPage> {
                       Checkbox(
                         value: lembrarMe,
                         checkColor: Colors.black,
-                        activeColor: Colors.white,
-                        onChanged: (value) {
-                          setState(() => lembrarMe = value!);
-                        },
+                        activeColor: AppColors.white,
+                        onChanged: (v) => setState(() => lembrarMe = v!),
                       ),
-                      const Text(
-                        "Lembrar-me",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
+                      Text("Lembrar-me", style: AppTextStyles.body),
                     ],
                   ),
                   GestureDetector(
                     onTap: () {},
-                    child: const Text(
-                      "Esqueceu sua senha?",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Text(
+                      "Esqueceu a senha?",
+                      style: AppTextStyles.bodyBold,
                     ),
                   ),
                 ],
@@ -165,42 +108,25 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
-              // BOTÃO ENTRAR
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF010207),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: isLogin
-                      ? signInWithEmailAndPassword
-                      : createUserWithEmailAndPassword,
-                  child: Text(
-                    isLogin ? "Entrar" : "Cadastrar",
-                    style: const TextStyle(
-                      fontFamily: "Poppins",
-                      fontSize: 18,
-                      color: Colors.white, // 👈 AGORA ESTÁ BRANCO 🔥
-                    ),
-                  ),
-                ),
+              /// BOTÃO ENTRAR (AppButton)
+              AppButton(
+                text: isLogin ? "Entrar" : "Cadastrar",
+                onPressed: isLogin
+                    ? signInWithEmailAndPassword
+                    : createUserWithEmailAndPassword,
               ),
 
               const SizedBox(height: 20),
 
-              // DIVISOR
+              /// DIVISOR "ou"
               Row(
-                children: const [
-                  Expanded(child: Divider(color: Colors.white54)),
-                  Padding(
+                children: [
+                  Expanded(child: Divider(color: AppColors.white70)),
+                  const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text("ou", style: TextStyle(color: Colors.white)),
+                    child: Text("ou", style: AppTextStyles.body),
                   ),
-                  Expanded(child: Divider(color: Colors.white54)),
+                  Expanded(child: Divider(color: AppColors.white70)),
                 ],
               ),
 
@@ -212,25 +138,23 @@ class _LoginPageState extends State<LoginPage> {
                 height: 50,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.white),
+                    side: const BorderSide(color: AppColors.white),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                     backgroundColor: Colors.transparent,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    // TODO: implementar login com Google
+                  },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset("assets/google.png", width: 22),
+                      Image.asset("assets/google.png", width: 22, height: 22),
                       const SizedBox(width: 12),
-                      const Text(
+                      Text(
                         "Entrar com Google",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: "Poppins",
-                          fontSize: 16,
-                        ),
+                        style: AppTextStyles.buttonSecondary,
                       ),
                     ],
                   ),
@@ -239,26 +163,15 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 26),
 
-              // RODAPÉ
+              /// RODAPÉ: Criar conta
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Ainda não possui conta?",
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  Text("Ainda não possui conta?", style: AppTextStyles.body),
                   const SizedBox(width: 6),
                   GestureDetector(
-                    onTap: () {
-                      setState(() => isLogin = !isLogin);
-                    },
-                    child: const Text(
-                      "Cadastre-se",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onTap: () => setState(() => isLogin = !isLogin),
+                    child: Text("Cadastre-se", style: AppTextStyles.bodyBold),
                   ),
                 ],
               ),
