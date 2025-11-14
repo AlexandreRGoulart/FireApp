@@ -5,6 +5,7 @@ import '../../screen/login_register_screen.dart';
 import '../../screen/home_page_screen.dart';
 import '../../screen/tela_inicial_screen.dart';
 import '../../screen/show_location_screen.dart';
+import '../../screen/tela_cadastro_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -21,6 +22,9 @@ class AppRouter {
 
       case AppRoutes.showLocation:
         return MaterialPageRoute(builder: (_) => ShowLocationScreen());
+
+      case AppRoutes.telaCadastro:
+        return MaterialPageRoute(builder: (_) => TelaCadastro());
 
       default:
         return MaterialPageRoute(

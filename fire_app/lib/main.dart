@@ -1,8 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:fire_app/screen/tela_inicial_screen.dart';
-import 'package:fire_app/screen/widget_tree.dart';
-import 'theme/app_theme.dart'; // ⬅️ importa o tema global
+
+import 'core/navigation/app_router.dart';
+import 'core/navigation/app_routes.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,14 +18,11 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
       theme: AppTheme.theme,
 
-      home: const TelaInicialScreen(),
+      initialRoute: AppRoutes.telaInicial,
 
-      routes: {
-        '/widget_tree': (context) => const WidgetTree(),
-      },
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }
