@@ -7,6 +7,7 @@ import '../../screen/tela_inicial_screen.dart';
 import '../../screen/show_location_screen.dart';
 import '../../screen/tela_cadastro_screen.dart';
 import '../../screen/tela_recuperar_senha.dart';
+import '../../screen/tela_inicial_acao.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -28,7 +29,10 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => TelaCadastro());
 
       case AppRoutes.telaRecuperarSenha:
-        return MaterialPageRoute(builder: (_) => const TelaRecuperarSenha());
+        return MaterialPageRoute(builder: (_) => TelaRecuperarSenha());
+
+      case AppRoutes.telaInicialAcao:
+        return MaterialPageRoute(builder: (_) => TelaInicialAcao());
 
       default:
         return MaterialPageRoute(
