@@ -6,5 +6,5 @@ class AppRoutes {
   static const String showLocation = '/show-location';
   static const String telaCadastro = '/cadastro';
   static const String telaRecuperarSenha = '/recuperar-senha';
-
+  static const String telaInicialAcao = '/inicial-acao';
 }

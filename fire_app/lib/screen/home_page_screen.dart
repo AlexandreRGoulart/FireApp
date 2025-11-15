@@ -7,6 +7,7 @@ import 'package:fire_app/database/database_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../components/app_button.dart';
+import '../core/navigation/app_routes.dart';
 
 class HomePageScreen extends StatelessWidget {
   HomePageScreen({super.key});
@@ -21,18 +22,6 @@ class HomePageScreen extends StatelessWidget {
     return Text(
       user?.email ?? 'Sem e-mail',
       style: AppTextStyles.bodyBold.copyWith(fontSize: 16),
-    );
-  }
-
-  Widget _criarDados() {
-    return AppButton(
-      text: "Criar dados (teste)",
-      onPressed: () async {
-        await DatabaseService().create(
-          path: 'data1',
-          data: "{'name':'Flutter pro'}",
-        );
-      },
     );
   }
 
@@ -51,11 +40,21 @@ class HomePageScreen extends StatelessWidget {
               const SizedBox(height: 4),
 
               _userUid(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
               Text("O que deseja fazer hoje?", style: AppTextStyles.subtitle),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+
+              /// 🔹 Botão MENU RÁPIDO (vai para TelaInicialAcao)
+              AppButton(
+                text: "Menu rápido",
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.telaInicialAcao);
+                },
+              ),
+
+              const SizedBox(height: 20),
 
               // CARDS DE AÇÃO
               Expanded(
