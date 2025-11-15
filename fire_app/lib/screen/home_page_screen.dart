@@ -56,11 +56,11 @@ class HomePageScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // CARDS DE AÇÃO
+              // LISTA DE CARDS
               Expanded(
                 child: ListView(
                   children: [
-                    // Abrir Mapa (já existia)
+                    // Abrir Mapa
                     _HomeActionCard(
                       icon: Icons.map_outlined,
                       title: "Abrir Mapa",
@@ -76,7 +76,7 @@ class HomePageScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // Criar dados (já existia)
+                    // Criar dados (teste)
                     _HomeActionCard(
                       icon: Icons.add_chart_outlined,
                       title: "Criar dados (teste)",
@@ -90,7 +90,17 @@ class HomePageScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // SignOut (já existia)
+                    // *** MEUS ALERTAS ***
+                    _HomeActionCard(
+                      icon: Icons.warning_amber_outlined,
+                      title: "Meus Alertas",
+                      description: "Acompanhe seus alertas enviados.",
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.meusAlertas),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // SignOut
                     _HomeActionCard(
                       icon: Icons.logout,
                       title: "Sair",
