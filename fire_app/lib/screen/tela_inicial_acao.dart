@@ -59,7 +59,8 @@ class TelaInicialAcao extends StatelessWidget {
                 icon: Icons.warning_amber_outlined,
                 title: "Meus alertas",
                 subtitle: "Acompanhe os alertas enviados.",
-                onTap: () => _emDesenvolvimento(context),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.meusAlertas),
               ),
 
               const SizedBox(height: 20),
