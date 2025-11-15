@@ -9,6 +9,7 @@ import '../../screen/tela_cadastro_screen.dart';
 import '../../screen/tela_recuperar_senha.dart';
 import '../../screen/tela_inicial_acao.dart';
 import '../../screen/meus_alertas_screen.dart';
+import '../../screen/cadastro_incendio_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -37,6 +38,9 @@ class AppRouter {
 
       case AppRoutes.meusAlertas:
         return MaterialPageRoute(builder: (_) => MeusAlertasScreen());
+
+      case AppRoutes.cadastroIncendio:
+        return MaterialPageRoute(builder: (_) => CadastroIncendioScreen());
 
       default:
         return MaterialPageRoute(

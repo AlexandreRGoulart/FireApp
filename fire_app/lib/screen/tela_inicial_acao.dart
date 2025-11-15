@@ -49,7 +49,8 @@ class TelaInicialAcao extends StatelessWidget {
                 icon: Icons.local_fire_department_outlined,
                 title: "Reportar incêndio",
                 subtitle: "Registre um foco de incêndio no mapa.",
-                onTap: () => _emDesenvolvimento(context),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.cadastroIncendio),
               ),
 
               const SizedBox(height: 20),

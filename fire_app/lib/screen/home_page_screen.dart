@@ -119,13 +119,7 @@ class HomePageScreen extends StatelessWidget {
               AppButton(
                 text: "Reportar incêndio agora",
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Tela de cadastro de incêndio ainda não criada",
-                      ),
-                    ),
-                  );
+                  Navigator.pushNamed(context, AppRoutes.cadastroIncendio);
                 },
               ),
             ],

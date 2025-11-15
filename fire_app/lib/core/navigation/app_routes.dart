@@ -8,4 +8,6 @@ class AppRoutes {
   static const String telaRecuperarSenha = '/recuperar-senha';
   static const String telaInicialAcao = '/inicial-acao';
   static const String meusAlertas = '/meus-alertas';
+  static const String cadastroIncendio = '/cadastro-incendio';
+  static const String adicionarMapa = '/adicionar-mapa';
 }
