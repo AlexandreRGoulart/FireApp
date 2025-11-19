@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
+
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
-import '../components/app_input.dart';
 import '../components/app_button.dart';
-import '../core/navigation/app_routes.dart';
+import '../components/app_input.dart';
+
+// Tela onde o usuário desenha o polígono
+import 'adicionar_mapa_screen.dart';
 
 class CadastroIncendioScreen extends StatefulWidget {
   const CadastroIncendioScreen({super.key});
@@ -13,22 +19,105 @@ class CadastroIncendioScreen extends StatefulWidget {
 }
 
 class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
-  final TextEditingController nomeController = TextEditingController();
-  final TextEditingController latController = TextEditingController();
-  final TextEditingController lonController = TextEditingController();
+  final TextEditingController descricaoController = TextEditingController();
+  final TextEditingController nivelRiscoController = TextEditingController();
+
+  final MapController _mapController = MapController();
+  final Location _location = Location();
+
+  LatLng? _currentLocation;
+
+  bool isLoading = true;
+
+  // Polígono desenhado no mapa de seleção
+  List<LatLng> areaPoligono = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
+
+  Future<void> _initLocation() async {
+    bool serviceEnabled = await _location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await _location.requestService();
+      if (!serviceEnabled) return;
+    }
+
+    var permission = await _location.hasPermission();
+    if (permission == PermissionStatus.denied) {
+      permission = await _location.requestPermission();
+      if (permission != PermissionStatus.granted) return;
+    }
+
+    _location.onLocationChanged.listen((loc) {
+      if (loc.latitude != null && loc.longitude != null) {
+        setState(() {
+          _currentLocation = LatLng(loc.latitude!, loc.longitude!);
+          isLoading = false;
+        });
+      }
+    });
+  }
+
+  // Abre a tela para desenhar área
+  Future<void> _abrirMapaDesenho() async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AdicionarMapaScreen()),
+    );
+
+    if (resultado != null && resultado is List<LatLng>) {
+      setState(() {
+        areaPoligono = resultado;
+      });
+    }
+  }
+
+  // Salvar incêndio no banco
+  void _salvarIncendio() {
+    if (descricaoController.text.isEmpty ||
+        nivelRiscoController.text.isEmpty ||
+        areaPoligono.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Preencha todos os campos e desenhe a área."),
+        ),
+      );
+      return;
+    }
+
+    // Aqui você pode enviar para o Firestore:
+    //
+    // FirebaseFirestore.instance.collection("incendios").add({
+    //   "descricao": descricaoController.text,
+    //   "nivel": nivelRiscoController.text,
+    //   "area": areaPoligono.map((e) => {"lat": e.latitude, "lng": e.longitude}).toList(),
+    //   "criadoEm": DateTime.now(),
+    // });
+    //
+    // Vou deixar só um feedback por enquanto:
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Incêndio registrado com sucesso!")),
+    );
+
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// BOTÃO VOLTAR
-              GestureDetector(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 🔙 topo
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 10),
+              child: GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Icon(
                   Icons.arrow_back,
@@ -36,69 +125,111 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                   size: 30,
                 ),
               ),
+            ),
 
-              const SizedBox(height: 25),
+            const SizedBox(height: 10),
 
-              /// TÍTULO
-              Text("Cadastrar Incêndio", style: AppTextStyles.titleMedium),
-
-              const SizedBox(height: 25),
-
-              /// INPUTS
-              AppInput(
-                label: "Nome",
-                hint: "Nome do incêndio",
-                controller: nomeController,
+            /// 🔥 título
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                "Registrar incêndio",
+                style: AppTextStyles.titleMedium,
               ),
+            ),
 
-              const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-              AppInput(
-                label: "Latitude",
-                hint: "Digite a latitude",
-                keyboardType: TextInputType.number,
-                controller: latController,
+            /// 📝 campos de texto
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: Column(
+                children: [
+                  AppInput(
+                    label: "Descrição do incêndio",
+                    hint: "Ex: Fumaça densa próxima à mata",
+                    controller: descricaoController,
+                  ),
+                  const SizedBox(height: 16),
+
+                  AppInput(
+                    label: "Nível de risco",
+                    hint: "Ex: Alto / Médio / Baixo",
+                    controller: nivelRiscoController,
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-              AppInput(
-                label: "Longitude",
-                hint: "Digite a longitude",
-                keyboardType: TextInputType.number,
-                controller: lonController,
+            /// 🗺️ MINI MAPA + POLÍGONO
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: isLoading || _currentLocation == null
+                      ? const Center(child: CircularProgressIndicator())
+                      : FlutterMap(
+                          mapController: _mapController,
+                          options: MapOptions(
+                            initialCenter: _currentLocation!,
+                            initialZoom: 12,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            ),
+
+                            // Polígono desenhado
+                            PolygonLayer(
+                              polygons: [
+                                if (areaPoligono.isNotEmpty)
+                                  Polygon(
+                                    points: areaPoligono,
+                                    color: Colors.red.withOpacity(0.3),
+                                    borderColor: Colors.red,
+                                    borderStrokeWidth: 3,
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: 16),
 
-              /// BOTÃO — abrir mapa
-              AppButton(
-                text: "Adicionar no mapa",
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.adicionarMapa);
-                },
+            /// ✏️ botão abrir tela de desenho
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: AppButton(
+                text: "Adicionar área no mapa",
                 outlined: true,
+                onPressed: _abrirMapaDesenho,
               ),
+            ),
 
-              const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-              /// BOTÃO SALVAR
-              AppButton(
-                text: "Salvar",
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Salvando incêndio... (em desenvolvimento)",
-                      ),
-                    ),
-                  );
-                },
+            /// 🔴 salvar incêndio
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: AppButton(
+                text: "Salvar incêndio",
+                onPressed: _salvarIncendio,
               ),
+            ),
 
-              const SizedBox(height: 40),
-            ],
-          ),
+            const SizedBox(height: 30),
+          ],
         ),
       ),
     );
