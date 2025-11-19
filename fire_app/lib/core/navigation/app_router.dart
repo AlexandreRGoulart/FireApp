@@ -11,6 +11,7 @@ import '../../screen/tela_inicial_acao.dart';
 import '../../screen/meus_alertas_screen.dart';
 import '../../screen/cadastro_incendio_screen.dart';
 import '../../screen/adicionar_mapa_screen.dart';
+import '../../screen/informacoes_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -45,6 +46,9 @@ class AppRouter {
 
       case AppRoutes.adicionarMapa:
         return MaterialPageRoute(builder: (_) => AdicionarMapaScreen());
+
+      case AppRoutes.informacoes:
+        return MaterialPageRoute(builder: (_) => InformacoesScreen());
 
       default:
         return MaterialPageRoute(
