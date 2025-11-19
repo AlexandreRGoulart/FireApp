@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
-import '../components/app_button.dart';
 import '../core/navigation/app_routes.dart';
 
 class TelaInicialAcao extends StatelessWidget {
@@ -66,14 +65,24 @@ class TelaInicialAcao extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              /// BOTÃO 3 — Mapa / Localização
+              /// BOTÃO 3 — Mapa
               _MenuCard(
                 icon: Icons.map_outlined,
                 title: "Mapa",
                 subtitle: "Veja a sua localização atual.",
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.showLocation);
-                },
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.showLocation),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// BOTÃO 4 — Ajuda e Comentários
+              _MenuCard(
+                icon: Icons.help_outline_rounded,
+                title: "Ajuda e comentários",
+                subtitle: "Tire dúvidas e envie sugestões.",
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.ajudaComentarios),
               ),
             ],
           ),

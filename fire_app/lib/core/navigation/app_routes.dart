@@ -11,4 +11,5 @@ class AppRoutes {
   static const String cadastroIncendio = '/cadastro-incendio';
   static const String adicionarMapa = '/adicionar-mapa';
   static const String informacoes = '/informacoes';
+  static const String ajudaComentarios = '/ajudaComentarios';
 }
