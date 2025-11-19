@@ -15,14 +15,88 @@ class AdicionarMapaScreen extends StatefulWidget {
 class _AdicionarMapaScreenState extends State<AdicionarMapaScreen> {
   GoogleMapController? mapController;
 
-  // Posição inicial do mapa (Brasil)
+  // Posição inicial do mapa (ex.: Brasil)
   static const LatLng initialPosition = LatLng(-15.793889, -47.882778);
 
-  // FUTURO: pontos para desenhar polígono
+  // Pontos do polígono
   final List<LatLng> polygonPoints = [];
+
+  // Controle do modo de desenho
+  bool isDrawing = false;
+
+  void _toggleDrawingMode() {
+    setState(() {
+      // ao iniciar o desenho, limpamos os pontos anteriores
+      isDrawing = !isDrawing;
+      if (isDrawing) {
+        polygonPoints.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Modo desenho ativado. Toque no mapa para marcar os pontos da área.",
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Modo desenho desativado.")),
+        );
+      }
+    });
+  }
+
+  void _onMapTap(LatLng position) {
+    if (!isDrawing) return;
+
+    setState(() {
+      polygonPoints.add(position);
+    });
+  }
+
+  void _onSaveArea() {
+    if (polygonPoints.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Defina pelo menos 3 pontos para formar uma área."),
+        ),
+      );
+      return;
+    }
+
+    // Futuro: enviar polygonPoints para o cadastro de incêndio / Firestore
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Área de incêndio salva (demo).")),
+    );
+
+    // Exemplo: voltar com o resultado depois
+    // Navigator.pop(context, polygonPoints);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final polygons = <Polygon>{
+      if (polygonPoints.isNotEmpty)
+        Polygon(
+          polygonId: const PolygonId('area'),
+          points: polygonPoints,
+          strokeColor: Colors.red,
+          strokeWidth: 3,
+          fillColor: Colors.red.withOpacity(0.25),
+        ),
+    };
+
+    final markers = polygonPoints
+        .asMap()
+        .entries
+        .map(
+          (entry) => Marker(
+            markerId: MarkerId('p${entry.key}'),
+            position: entry.value,
+            infoWindow: InfoWindow(title: 'Ponto ${entry.key + 1}'),
+          ),
+        )
+        .toSet();
+
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
@@ -53,7 +127,20 @@ class _AdicionarMapaScreenState extends State<AdicionarMapaScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+
+            /// STATUS DO DESENHO
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                isDrawing
+                    ? "Modo desenho ativo — toque no mapa para marcar pontos."
+                    : "Toque em 'Desenhar área' para começar.",
+                style: AppTextStyles.small,
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             /// MAPA
             Expanded(
@@ -73,25 +160,9 @@ class _AdicionarMapaScreenState extends State<AdicionarMapaScreen> {
                     onMapCreated: (controller) {
                       mapController = controller;
                     },
-
-                    /// FUTURO: detectar pontos clicados
-                    onTap: (LatLng position) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Modo desenho ainda não implementado"),
-                        ),
-                      );
-                    },
-
-                    polygons: {
-                      Polygon(
-                        polygonId: const PolygonId('area'),
-                        points: polygonPoints,
-                        strokeColor: Colors.red,
-                        strokeWidth: 3,
-                        fillColor: Colors.red.withOpacity(0.2),
-                      ),
-                    },
+                    onTap: _onMapTap,
+                    polygons: polygons,
+                    markers: markers,
                   ),
                 ),
               ),
@@ -99,19 +170,13 @@ class _AdicionarMapaScreenState extends State<AdicionarMapaScreen> {
 
             const SizedBox(height: 20),
 
-            /// BOTÃO: DESENHAR
+            /// BOTÃO: DESENHAR / PARAR
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 26),
               child: AppButton(
-                text: "Desenhar área",
+                text: isDrawing ? "Parar desenho" : "Desenhar área",
                 outlined: true,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Modo de desenho será implementado"),
-                    ),
-                  );
-                },
+                onPressed: _toggleDrawingMode,
               ),
             ),
 
@@ -122,11 +187,8 @@ class _AdicionarMapaScreenState extends State<AdicionarMapaScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 26),
               child: AppButton(
                 text: "Salvar área no incêndio",
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Polígono salvo (demo)")),
-                  );
-                },
+                onPressed: _onSaveArea,
+                isDisabled: polygonPoints.length < 3,
               ),
             ),
 
