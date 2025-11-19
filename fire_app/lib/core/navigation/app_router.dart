@@ -10,6 +10,7 @@ import '../../screen/tela_recuperar_senha.dart';
 import '../../screen/tela_inicial_acao.dart';
 import '../../screen/meus_alertas_screen.dart';
 import '../../screen/cadastro_incendio_screen.dart';
+import '../../screen/adicionar_mapa_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -41,6 +42,9 @@ class AppRouter {
 
       case AppRoutes.cadastroIncendio:
         return MaterialPageRoute(builder: (_) => CadastroIncendioScreen());
+
+      case AppRoutes.adicionarMapa:
+        return MaterialPageRoute(builder: (_) => AdicionarMapaScreen());
 
       default:
         return MaterialPageRoute(
