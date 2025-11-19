@@ -12,6 +12,7 @@ import '../../screen/meus_alertas_screen.dart';
 import '../../screen/cadastro_incendio_screen.dart';
 import '../../screen/adicionar_mapa_screen.dart';
 import '../../screen/informacoes_screen.dart';
+import '../../screen/ajuda_comentarios_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -49,6 +50,9 @@ class AppRouter {
 
       case AppRoutes.informacoes:
         return MaterialPageRoute(builder: (_) => InformacoesScreen());
+
+      case AppRoutes.ajudaComentarios:
+        return MaterialPageRoute(builder: (_) => AjudaComentariosScreen());
 
       default:
         return MaterialPageRoute(
