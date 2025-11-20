@@ -1,193 +1,159 @@
-import 'package:fire_app/screen/show_location_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:fire_app/auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fire_app/database/database_service.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
-import '../components/app_button.dart';
 import '../core/navigation/app_routes.dart';
 
-class HomePageScreen extends StatelessWidget {
-  HomePageScreen({super.key});
+class HomePageScreen extends StatefulWidget {
+  const HomePageScreen({super.key});
 
-  final User? user = Auth().currentUser;
+  @override
+  State<HomePageScreen> createState() => _HomePageScreenState();
+}
 
-  Future<void> signOut() async {
-    await Auth().SignOut();
-  }
+class _HomePageScreenState extends State<HomePageScreen> {
+  final MapController mapController = MapController();
 
-  Widget _userUid() {
-    return Text(
-      user?.email ?? 'Sem e-mail',
-      style: AppTextStyles.bodyBold.copyWith(fontSize: 16),
-    );
-  }
+  // 🔥 Posição inicial do mapa (Campus IF Goiano – Ceres)
+  final LatLng initialPoint = LatLng(-15.3080, -49.6050);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.primary,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
+        children: [
+          /// ===========================================================
+          /// 🗺 MAPA EM TELA CHEIA
+          /// ===========================================================
+          FlutterMap(
+            mapController: mapController,
+            options: MapOptions(
+              initialCenter: initialPoint,
+              initialZoom: 15,
+              maxZoom: 19,
+              minZoom: 3,
+            ),
             children: [
-              // TOPO — Saudação
-              Text("Olá 👋", style: AppTextStyles.titleSmall),
-              const SizedBox(height: 4),
-
-              _userUid(),
-              const SizedBox(height: 12),
-
-              Text("O que deseja fazer hoje?", style: AppTextStyles.subtitle),
-
-              const SizedBox(height: 20),
-
-              /// 🔹 Botão MENU RÁPIDO (vai para TelaInicialAcao)
-              AppButton(
-                text: "Menu rápido",
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.telaInicialAcao);
-                },
+              TileLayer(
+                urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                userAgentPackageName: "com.fireapp.app",
               ),
 
-              const SizedBox(height: 20),
+              // 📌 Aqui futuramente adicionamos marcadores de incêndio
+            ],
+          ),
 
-              // LISTA DE CARDS
-              Expanded(
-                child: ListView(
-                  children: [
-                    // Abrir Mapa
-                    _HomeActionCard(
-                      icon: Icons.map_outlined,
-                      title: "Abrir Mapa",
-                      description: "Visualize a sua localização atual no mapa.",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ShowLocationScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Criar dados (teste)
-                    _HomeActionCard(
-                      icon: Icons.add_chart_outlined,
-                      title: "Criar dados (teste)",
-                      description: "Envia dados de teste ao Firestore.",
-                      onTap: () async {
-                        await DatabaseService().create(
-                          path: 'data1',
-                          data: "{'name':'Flutter pro'}",
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // *** MEUS ALERTAS ***
-                    _HomeActionCard(
-                      icon: Icons.warning_amber_outlined,
-                      title: "Meus Alertas",
-                      description: "Acompanhe seus alertas enviados.",
-                      onTap: () =>
-                          Navigator.pushNamed(context, AppRoutes.meusAlertas),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // SignOut
-                    _HomeActionCard(
-                      icon: Icons.logout,
-                      title: "Sair",
-                      description: "Finalizar sessão e voltar ao login.",
-                      onTap: () async {
-                        await signOut();
-                      },
+          /// ===========================================================
+          /// ☰ BOTÃO SANDUÍCHE — abre Menu Rápido
+          /// ===========================================================
+          Positioned(
+            top: 32,
+            left: 20,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.telaInicialAcao);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
+                child: const Icon(Icons.menu, color: Colors.white, size: 32),
               ),
-
-              const SizedBox(height: 16),
-
-              // BOTÃO PRINCIPAL
-              AppButton(
-                text: "Reportar incêndio agora",
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.cadastroIncendio);
-                },
-              ),
-            ],
+            ),
           ),
-        ),
+
+          /// ===========================================================
+          /// 🔻 BARRA INFERIOR FIXA — Informações / Notificações / Adicionar
+          /// ===========================================================
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  /// 📘 INFORMAÇÕES
+                  _BottomButton(
+                    icon: Icons.info_outline,
+                    label: "Informações",
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.informacoes),
+                  ),
+
+                  /// 🔔 NOTIFICAÇÕES
+                  _BottomButton(
+                    icon: Icons.notifications_none_outlined,
+                    label: "Notificações",
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.meusAlertas),
+                  ),
+
+                  /// ➕ ADICIONAR INCÊNDIO
+                  _BottomButton(
+                    icon: Icons.add_circle_outline,
+                    label: "Adicionar",
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.cadastroIncendio,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _HomeActionCard extends StatelessWidget {
+/// =====================================================================
+/// 🔘 COMPONENTE DO BOTÃO INFERIOR
+/// =====================================================================
+class _BottomButton extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String description;
+  final String label;
   final VoidCallback onTap;
 
-  const _HomeActionCard({
+  const _BottomButton({
     super.key,
     required this.icon,
-    required this.title,
-    required this.description,
+    required this.label,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 26),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: AppTextStyles.bodyBold.copyWith(
-                      color: AppColors.darkText,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: AppTextStyles.small.copyWith(color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: Colors.black45),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 32),
+          const SizedBox(height: 4),
+          Text(label, style: AppTextStyles.small.copyWith(color: Colors.white)),
+        ],
       ),
     );
   }
