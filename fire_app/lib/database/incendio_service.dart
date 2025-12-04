@@ -52,13 +52,20 @@ class IncendioService {
 
   /// Listar incêndios em tempo real (stream)
   Stream<List<IncendioModel>> streamIncendios() {
+    print('📡 [IncendioService] Stream aberto para coleção "incendios"');
     return _firestore
         .collection(collection)
         .orderBy('criadoEm', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => IncendioModel.fromMap(doc.id, doc.data()))
-            .toList());
+        .map((snapshot) {
+          print('📊 [IncendioService] Snapshot recebido com ${snapshot.docs.length} documentos');
+          return snapshot.docs
+              .map((doc) => IncendioModel.fromMap(doc.id, doc.data()))
+              .toList();
+        })
+        .handleError((e) {
+          print('❌ [IncendioService] Erro no stream: $e');
+        });
   }
 
   /// Obter incêndio por ID

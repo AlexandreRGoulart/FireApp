@@ -95,7 +95,9 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     });
 
     try {
-      print('🔥 Iniciando salvamento do incêndio...');
+      print('🔥 [CadastroIncendio] Iniciando salvamento do incêndio...');
+      print('📍 Localização: ${_currentLocation}');
+      print('🗺️ Polígono com ${areaPoligono.length} pontos: $areaPoligono');
       
       final incendio = IncendioModel(
         descricao: descricaoController.text,
@@ -106,21 +108,24 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         longitude: _currentLocation?.longitude,
       );
 
-      print('📝 Incêndio criado: ${incendio.descricao}');
+      print('📝 [CadastroIncendio] Incêndio criado: ${incendio.descricao}');
       
       final id = await _incendioService.salvarIncendio(incendio);
       
-      print('✅ Incêndio salvo com ID: $id');
+      print('✅ [CadastroIncendio] Incêndio salvo com ID: $id');
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("✓ Incêndio registrado com sucesso!"),
+          content: const Text("✓ Incêndio registrado com sucesso!\nAtualizando mapa..."),
           backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
+          duration: const Duration(seconds: 3),
         ),
       );
+
+      // Aguardar um pouco para sincronizar
+      await Future.delayed(const Duration(seconds: 1));
 
       // Limpar formulário
       descricaoController.clear();
@@ -133,7 +138,7 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     } catch (e) {
       if (!mounted) return;
 
-      print('❌ Erro ao salvar: $e');
+      print('❌ [CadastroIncendio] Erro ao salvar: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

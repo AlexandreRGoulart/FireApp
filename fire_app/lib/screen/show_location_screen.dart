@@ -65,12 +65,17 @@ class _ShowLocationScreenState extends State<ShowLocationScreen> {
   }
 
   void _loadIncendios() {
+    print('🗺️ [ShowLocationScreen] Iniciando stream de incêndios...');
     _incendioService.streamIncendios().listen((incendios) {
+      print('🔥 [ShowLocationScreen] Recebido ${incendios.length} incêndios');
+      incendios.forEach((inc) {
+        print('  - ${inc.descricao}: ${inc.areaPoligono.length} pontos, Lat=${inc.latitude}, Lng=${inc.longitude}');
+      });
       setState(() {
         _incendios = incendios;
       });
     }, onError: (error) {
-      print("Erro ao carregar incêndios: $error");
+      print("❌ [ShowLocationScreen] Erro ao carregar incêndios: $error");
     });
   }
 
