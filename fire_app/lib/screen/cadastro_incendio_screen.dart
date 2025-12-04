@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
@@ -84,7 +85,8 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         areaPoligono.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Preencha todos os campos e desenhe a área no mapa."),
+          content: Text("❌ Preencha todos os campos e desenhe a área no mapa."),
+          backgroundColor: Colors.red,
         ),
       );
       return;
@@ -95,9 +97,18 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     });
 
     try {
+      // Verificar autenticação
+      final user = FirebaseAuth.instance.currentUser;
+      print('👤 [CadastroIncendio] Verificando autenticação - Usuário: ${user?.uid ?? "NÃO AUTENTICADO"}');
+      
+      if (user == null) {
+        throw Exception('❌ Você não está autenticado. Faça login primeiro.');
+      }
+
       print('🔥 [CadastroIncendio] Iniciando salvamento do incêndio...');
       print('📍 Localização: ${_currentLocation}');
       print('🗺️ Polígono com ${areaPoligono.length} pontos: $areaPoligono');
+      print('👤 Usuário ID: ${user.uid}');
       
       final incendio = IncendioModel(
         descricao: descricaoController.text,
@@ -142,9 +153,9 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Erro ao salvar: ${e.toString()}"),
+          content: Text("❌ Erro ao salvar: ${e.toString()}"),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 4),
         ),
       );
     } finally {

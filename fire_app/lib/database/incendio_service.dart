@@ -19,19 +19,30 @@ class IncendioService {
         throw Exception('Usuário não autenticado. Faça login antes de registrar um incêndio.');
       }
 
-      final docRef = await _firestore.collection(collection).add(
-        {
-          ...incendio.toMap(),
-          'criadoPor': usuarioId,
-          'criadoEm': FieldValue.serverTimestamp(), // Use server timestamp
-        },
-      );
+      print('📤 Enviando para Firestore na coleção "$collection"...');
+      
+      final docData = {
+        'descricao': incendio.descricao,
+        'nivelRisco': incendio.nivelRisco,
+        'areaPoligono': incendio.areaPoligono
+            .map((e) => {'latitude': e.latitude, 'longitude': e.longitude})
+            .toList(),
+        'latitude': incendio.latitude ?? 0.0,
+        'longitude': incendio.longitude ?? 0.0,
+        'criadoPor': usuarioId,
+        'criadoEm': FieldValue.serverTimestamp(),
+        'fotoUrl': incendio.fotoUrl,
+      };
+
+      print('📋 Dados a enviar: $docData');
+      
+      final docRef = await _firestore.collection(collection).add(docData);
       
       print('✅ Incêndio salvo com sucesso! ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
       print('❌ Erro ao salvar incêndio: $e');
-      throw Exception('Erro ao salvar incêndio: $e');
+      rethrow;
     }
   }
 
