@@ -7,7 +7,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 import 'package:fire_app/model/shared_location_model.dart';
+import 'package:fire_app/model/incendio_model.dart';
 import 'package:fire_app/database/firebase_location_service.dart';
+import 'package:fire_app/database/incendio_service.dart';
 
 
 
@@ -23,6 +25,7 @@ class _ShowLocationScreenState extends State<ShowLocationScreen> {
   final Location _location = Location();
   final TextEditingController _locationController = TextEditingController();
   final FirebaseLocationService _firebaseLocationService = FirebaseLocationService();
+  final IncendioService _incendioService = IncendioService();
 
   bool isLoading = true;
   bool isLoadingSharedLocations = false;
@@ -33,13 +36,14 @@ class _ShowLocationScreenState extends State<ShowLocationScreen> {
 
   List<LatLng> _route = [];
   List<SharedLocation> _sharedLocations = [];
+  List<IncendioModel> _incendios = [];
 
   @override
   void initState() {
     super.initState();
     _initializeLocation();
     _loadSharedLocations();
-    
+    _loadIncendios();
   }
 
   void _loadSharedLocations() {
@@ -57,6 +61,16 @@ class _ShowLocationScreenState extends State<ShowLocationScreen> {
       setState(() {
         isLoadingSharedLocations = false;
       });
+    });
+  }
+
+  void _loadIncendios() {
+    _incendioService.streamIncendios().listen((incendios) {
+      setState(() {
+        _incendios = incendios;
+      });
+    }, onError: (error) {
+      print("Erro ao carregar incêndios: $error");
     });
   }
 
@@ -303,6 +317,164 @@ Marker _buildSharedLocationMarker(SharedLocation location) {
     fetchRoute();
   }
 
+  // 🔥 Criar marcador de incêndio
+  Marker _buildIncendioMarker(IncendioModel incendio) {
+    if (incendio.latitude == null || incendio.longitude == null) {
+      return Marker(point: LatLng(0, 0), child: SizedBox.shrink());
+    }
+
+    Color corRisco = _getCorPorRisco(incendio.nivelRisco);
+
+    return Marker(
+      point: LatLng(incendio.latitude!, incendio.longitude!),
+      width: 50,
+      height: 50,
+      child: GestureDetector(
+        onTap: () => _mostrarDetalhesIncendio(incendio),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.local_fire_department,
+              color: corRisco,
+              size: 30,
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  )
+                ],
+              ),
+              child: Text(
+                incendio.nivelRisco,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  color: corRisco,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 🎨 Obter cor baseado no risco
+  Color _getCorPorRisco(String nivelRisco) {
+    switch (nivelRisco.toLowerCase()) {
+      case 'alto':
+        return Colors.red;
+      case 'médio':
+      case 'medio':
+        return Colors.orange;
+      case 'baixo':
+        return Colors.yellow;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // 📋 Mostrar detalhes do incêndio
+  void _mostrarDetalhesIncendio(IncendioModel incendio) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.local_fire_department, color: _getCorPorRisco(incendio.nivelRisco)),
+            SizedBox(width: 8),
+            Expanded(child: Text('Incêndio Registrado')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetalheItem('Descrição', incendio.descricao),
+              SizedBox(height: 12),
+              _buildDetalheItem('Nível de Risco', incendio.nivelRisco),
+              SizedBox(height: 12),
+              _buildDetalheItem(
+                'Data',
+                _formatarData(incendio.criadoEm),
+              ),
+              if (incendio.latitude != null && incendio.longitude != null) ...[
+                SizedBox(height: 12),
+                _buildDetalheItem(
+                  'Coordenadas',
+                  'Lat: ${incendio.latitude!.toStringAsFixed(4)}, Lng: ${incendio.longitude!.toStringAsFixed(4)}',
+                ),
+              ],
+              if (incendio.areaPoligono.isNotEmpty) ...[
+                SizedBox(height: 12),
+                _buildDetalheItem(
+                  'Área Mapeada',
+                  '${incendio.areaPoligono.length} pontos no polígono',
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Fechar'),
+          ),
+          if (incendio.latitude != null && incendio.longitude != null)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _destination = LatLng(incendio.latitude!, incendio.longitude!);
+                });
+                fetchRoute();
+              },
+              child: Text('Traçar Rota'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetalheItem(String label, String valor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[600],
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          valor,
+          style: TextStyle(fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  String _formatarData(String isoDate) {
+    try {
+      final date = DateTime.parse(isoDate);
+      return '${date.day}/${date.month}/${date.year} às ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return 'Data inválida';
+    }
+  }
+
   //FIM MARCADORES
 
     void _addCurrentLocation() {
@@ -369,6 +541,23 @@ Marker _buildSharedLocationMarker(SharedLocation location) {
             ),
             children: [
               TileLayer(urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"),
+              
+              // 🔥 Polígonos dos incêndios
+              PolygonLayer(
+                polygons: _incendios
+                    .where((incendio) => incendio.areaPoligono.isNotEmpty)
+                    .map((incendio) {
+                      final cor = _getCorPorRisco(incendio.nivelRisco);
+                      return Polygon(
+                        points: incendio.areaPoligono,
+                        color: cor.withOpacity(0.3),
+                        borderColor: cor,
+                        borderStrokeWidth: 2,
+                      );
+                    })
+                    .toList(),
+              ),
+
               CurrentLocationLayer(
                 style: LocationMarkerStyle(
                   marker: DefaultLocationMarker(
@@ -382,11 +571,20 @@ Marker _buildSharedLocationMarker(SharedLocation location) {
                 ),
               ),
 
+              // Marcadores de localizações compartilhadas
               MarkerLayer(
-                      markers: _sharedLocations
-                          .map(_buildSharedLocationMarker)
-                          .toList(),
-                    ),
+                markers: _sharedLocations
+                    .map(_buildSharedLocationMarker)
+                    .toList(),
+              ),
+
+              // 🔥 Marcadores de incêndios
+              MarkerLayer(
+                markers: _incendios
+                    .where((incendio) => incendio.latitude != null && incendio.longitude != null)
+                    .map(_buildIncendioMarker)
+                    .toList(),
+              ),
 
               if (_destination != null)
                 MarkerLayer(

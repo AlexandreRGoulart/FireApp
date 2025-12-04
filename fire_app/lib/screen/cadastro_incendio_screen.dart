@@ -7,8 +7,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../components/app_button.dart';
 import '../components/app_input.dart';
-
-// Tela onde o usuário desenha o polígono
+import '../database/incendio_service.dart';
+import '../model/incendio_model.dart';
 import 'adicionar_mapa_screen.dart';
 
 class CadastroIncendioScreen extends StatefulWidget {
@@ -24,10 +24,12 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
 
   final MapController _mapController = MapController();
   final Location _location = Location();
+  final IncendioService _incendioService = IncendioService();
 
   LatLng? _currentLocation;
 
   bool isLoading = true;
+  bool isSaving = false;
 
   // Polígono desenhado no mapa de seleção
   List<LatLng> areaPoligono = [];
@@ -76,34 +78,59 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
   }
 
   // Salvar incêndio no banco
-  void _salvarIncendio() {
+  void _salvarIncendio() async {
     if (descricaoController.text.isEmpty ||
         nivelRiscoController.text.isEmpty ||
         areaPoligono.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Preencha todos os campos e desenhe a área."),
+          content: Text("Preencha todos os campos e desenhe a área no mapa."),
         ),
       );
       return;
     }
 
-    // Aqui você pode enviar para o Firestore:
-    //
-    // FirebaseFirestore.instance.collection("incendios").add({
-    //   "descricao": descricaoController.text,
-    //   "nivel": nivelRiscoController.text,
-    //   "area": areaPoligono.map((e) => {"lat": e.latitude, "lng": e.longitude}).toList(),
-    //   "criadoEm": DateTime.now(),
-    // });
-    //
-    // Vou deixar só um feedback por enquanto:
+    setState(() {
+      isSaving = true;
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Incêndio registrado com sucesso!")),
-    );
+    try {
+      final incendio = IncendioModel(
+        descricao: descricaoController.text,
+        nivelRisco: nivelRiscoController.text,
+        areaPoligono: areaPoligono,
+        criadoEm: DateTime.now().toIso8601String(),
+        latitude: _currentLocation?.latitude,
+        longitude: _currentLocation?.longitude,
+      );
 
-    Navigator.pop(context);
+      await _incendioService.salvarIncendio(incendio);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("✓ Incêndio registrado com sucesso!"),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erro ao salvar: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        isSaving = false;
+      });
+    }
   }
 
   @override
@@ -223,8 +250,13 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 26),
               child: AppButton(
-                text: "Salvar incêndio",
-                onPressed: _salvarIncendio,
+                text: isSaving ? "Salvando..." : "Salvar incêndio",
+                onPressed: (descricaoController.text.isNotEmpty &&
+                        nivelRiscoController.text.isNotEmpty &&
+                        areaPoligono.isNotEmpty &&
+                        !isSaving)
+                    ? _salvarIncendio
+                    : () {},
               ),
             ),
 

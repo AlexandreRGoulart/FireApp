@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../database/incendio_service.dart';
+import '../model/incendio_model.dart';
 
 class MeusAlertasScreen extends StatelessWidget {
-  const MeusAlertasScreen({super.key});
+  MeusAlertasScreen({super.key});
+
+  final IncendioService _incendioService = IncendioService();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary, // fundo vermelho FireApp
+      backgroundColor: AppColors.primary,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
@@ -32,21 +36,57 @@ class MeusAlertasScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              /// LISTA DE ALERTAS
+              /// LISTA DE ALERTAS COM STREAM
               Expanded(
-                child: ListView.separated(
-                  itemCount: 4, // temporário — depois vem do Firestore
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (_, index) {
-                    return _AlertaCard(
-                      titulo: "Incêndio ${index + 1}",
-                      data: "12/11/2025 - 14:3$index",
-                      status: index % 2 == 0 ? "Pendente" : "Analisado",
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Detalhes em desenvolvimento"),
-                          ),
+                child: StreamBuilder<List<IncendioModel>>(
+                  stream: _incendioService.streamMeusIncendios(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          "Erro ao carregar alertas",
+                          style: AppTextStyles.body.copyWith(color: Colors.white),
+                        ),
+                      );
+                    }
+
+                    final incendios = snapshot.data ?? [];
+
+                    if (incendios.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department,
+                              size: 64,
+                              color: Colors.white30,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "Nenhum alerta registrado",
+                              style: AppTextStyles.body
+                                  .copyWith(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: incendios.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (_, index) {
+                        final incendio = incendios[index];
+                        return _AlertaCard(
+                          incendio: incendio,
+                          onTap: () {
+                            _mostrarDetalhes(context, incendio);
+                          },
                         );
                       },
                     );
@@ -59,19 +99,70 @@ class MeusAlertasScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _mostrarDetalhes(BuildContext context, IncendioModel incendio) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Detalhes do Alerta"),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetalhe("Descrição", incendio.descricao),
+              _buildDetalhe("Nível de Risco", incendio.nivelRisco),
+              _buildDetalhe(
+                "Data",
+                incendio.criadoEm.isNotEmpty
+                    ? DateTime.parse(incendio.criadoEm).toString().split('.')[0]
+                    : "N/A",
+              ),
+              if (incendio.latitude != null && incendio.longitude != null)
+                _buildDetalhe(
+                  "Localização",
+                  "Lat: ${incendio.latitude?.toStringAsFixed(4)}, Lng: ${incendio.longitude?.toStringAsFixed(4)}",
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Fechar"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetalhe(String label, String valor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            valor,
+            style: const TextStyle(fontSize: 13, color: Colors.black87),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _AlertaCard extends StatelessWidget {
-  final String titulo;
-  final String data;
-  final String status;
+  final IncendioModel incendio;
   final VoidCallback onTap;
 
   const _AlertaCard({
-    super.key,
-    required this.titulo,
-    required this.data,
-    required this.status,
+    required this.incendio,
     required this.onTap,
   });
 
@@ -110,7 +201,9 @@ class _AlertaCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    titulo,
+                    incendio.descricao.length > 30
+                        ? "${incendio.descricao.substring(0, 30)}..."
+                        : incendio.descricao,
                     style: AppTextStyles.bodyBold.copyWith(
                       color: AppColors.darkText,
                       fontSize: 16,
@@ -118,17 +211,28 @@ class _AlertaCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    data,
+                    DateTime.parse(incendio.criadoEm)
+                        .toString()
+                        .split('.')
+                        .first,
                     style: AppTextStyles.small.copyWith(color: Colors.black54),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    status,
-                    style: AppTextStyles.small.copyWith(
-                      color: status == "Pendente"
-                          ? Colors.orange
-                          : Colors.green,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _getCorRisco(incendio.nivelRisco)
+                          .withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "Risco: ${incendio.nivelRisco}",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _getCorRisco(incendio.nivelRisco),
+                      ),
                     ),
                   ),
                 ],
@@ -140,5 +244,19 @@ class _AlertaCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getCorRisco(String nivel) {
+    switch (nivel.toLowerCase()) {
+      case 'alto':
+        return Colors.red;
+      case 'médio':
+      case 'medio':
+        return Colors.orange;
+      case 'baixo':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 }
