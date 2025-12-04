@@ -13,15 +13,24 @@ class IncendioService {
   Future<String> salvarIncendio(IncendioModel incendio) async {
     try {
       final usuarioId = _auth.currentUser?.uid;
+      print('🔥 Salvando incêndio - Usuário ID: $usuarioId');
+      
+      if (usuarioId == null) {
+        throw Exception('Usuário não autenticado. Faça login antes de registrar um incêndio.');
+      }
+
       final docRef = await _firestore.collection(collection).add(
         {
           ...incendio.toMap(),
           'criadoPor': usuarioId,
-          'atualizado': FieldValue.serverTimestamp(),
+          'criadoEm': FieldValue.serverTimestamp(), // Use server timestamp
         },
       );
+      
+      print('✅ Incêndio salvo com sucesso! ID: ${docRef.id}');
       return docRef.id;
     } catch (e) {
+      print('❌ Erro ao salvar incêndio: $e');
       throw Exception('Erro ao salvar incêndio: $e');
     }
   }
@@ -109,16 +118,27 @@ class IncendioService {
   /// Stream de incêndios do usuário atual
   Stream<List<IncendioModel>> streamMeusIncendios() {
     final usuarioId = _auth.currentUser?.uid;
+    print('👤 Stream Meus Alertas - Usuário ID: $usuarioId');
+    
     if (usuarioId == null) {
+      print('⚠️ Usuário não autenticado para stream');
       return Stream.error('Usuário não autenticado');
     }
+    
     return _firestore
         .collection(collection)
         .where('criadoPor', isEqualTo: usuarioId)
         .orderBy('criadoEm', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => IncendioModel.fromMap(doc.id, doc.data()))
-            .toList());
+        .map((snapshot) {
+          final incendios = snapshot.docs
+              .map((doc) => IncendioModel.fromMap(doc.id, doc.data()))
+              .toList();
+          print('📊 Recebido ${incendios.length} incêndios do usuário');
+          return incendios;
+        })
+        .handleError((e) {
+          print('❌ Erro no stream: $e');
+        });
   }
 }

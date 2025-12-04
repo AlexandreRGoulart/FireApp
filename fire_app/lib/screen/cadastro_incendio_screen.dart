@@ -95,6 +95,8 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     });
 
     try {
+      print('🔥 Iniciando salvamento do incêndio...');
+      
       final incendio = IncendioModel(
         descricao: descricaoController.text,
         nivelRisco: nivelRiscoController.text,
@@ -104,7 +106,11 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         longitude: _currentLocation?.longitude,
       );
 
-      await _incendioService.salvarIncendio(incendio);
+      print('📝 Incêndio criado: ${incendio.descricao}');
+      
+      final id = await _incendioService.salvarIncendio(incendio);
+      
+      print('✅ Incêndio salvo com ID: $id');
 
       if (!mounted) return;
 
@@ -116,14 +122,24 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         ),
       );
 
+      // Limpar formulário
+      descricaoController.clear();
+      nivelRiscoController.clear();
+      setState(() {
+        areaPoligono = [];
+      });
+
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
+
+      print('❌ Erro ao salvar: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Erro ao salvar: ${e.toString()}"),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
         ),
       );
     } finally {
