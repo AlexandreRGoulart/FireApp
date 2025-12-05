@@ -8,6 +8,7 @@
     <!-- 📍 LOCALIZAÇÃO PARA MAPA E GEOLOCATOR -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- ⏳ OPCIONAL: localização em segundo plano (se ativar perigo/incêndio contínuo) -->
     <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/> -->
