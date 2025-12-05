@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/navigation/app_router.dart';
 import 'core/navigation/app_routes.dart';
@@ -19,10 +20,17 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-
       initialRoute: AppRoutes.telaInicial,
-
       onGenerateRoute: AppRouter.generateRoute,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+        Locale('en', 'US'),
+      ],
     );
   }
 }

@@ -49,7 +49,9 @@ class MeusAlertasScreen extends StatelessWidget {
                       return Center(
                         child: Text(
                           "Erro ao carregar alertas",
-                          style: AppTextStyles.body.copyWith(color: Colors.white),
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.white,
+                          ),
                         ),
                       );
                     }
@@ -69,8 +71,9 @@ class MeusAlertasScreen extends StatelessWidget {
                             const SizedBox(height: 16),
                             Text(
                               "Nenhum alerta registrado",
-                              style: AppTextStyles.body
-                                  .copyWith(color: Colors.white70),
+                              style: AppTextStyles.body.copyWith(
+                                color: Colors.white70,
+                              ),
                             ),
                           ],
                         ),
@@ -161,10 +164,7 @@ class _AlertaCard extends StatelessWidget {
   final IncendioModel incendio;
   final VoidCallback onTap;
 
-  const _AlertaCard({
-    required this.incendio,
-    required this.onTap,
-  });
+  const _AlertaCard({required this.incendio, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +183,7 @@ class _AlertaCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: const Icon(
@@ -211,19 +211,21 @@ class _AlertaCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateTime.parse(incendio.criadoEm)
-                        .toString()
-                        .split('.')
-                        .first,
+                    DateTime.parse(
+                      incendio.criadoEm,
+                    ).toString().split('.').first,
                     style: AppTextStyles.small.copyWith(color: Colors.black54),
                   ),
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getCorRisco(incendio.nivelRisco)
-                          .withOpacity(0.2),
+                      color: _getCorRisco(
+                        incendio.nivelRisco,
+                      ).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

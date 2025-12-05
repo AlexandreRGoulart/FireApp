@@ -40,7 +40,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
   }
 
   Future<void> _initLocation() async {
-    final serviceEnabled = await _location.serviceEnabled() || await _location.requestService();
+    final serviceEnabled =
+        await _location.serviceEnabled() || await _location.requestService();
     if (!serviceEnabled) {
       setState(() => _isLoadingLocation = false);
       return;
@@ -50,53 +51,67 @@ class _HomePageScreenState extends State<HomePageScreen> {
     if (permission == PermissionStatus.denied) {
       permission = await _location.requestPermission();
     }
-    if (permission != PermissionStatus.granted && permission != PermissionStatus.grantedLimited) {
+    if (permission != PermissionStatus.granted &&
+        permission != PermissionStatus.grantedLimited) {
       setState(() => _isLoadingLocation = false);
       return;
     }
 
-    _location.onLocationChanged.listen((loc) {
-      if (loc.latitude != null && loc.longitude != null) {
-        setState(() {
-          _currentLocation = LatLng(loc.latitude!, loc.longitude!);
-          _isLoadingLocation = false;
-        });
-      }
-    }, onError: (e) {
-      setState(() => _isLoadingLocation = false);
-      debugPrint('❌ Erro de localização: $e');
-    });
+    _location.onLocationChanged.listen(
+      (loc) {
+        if (loc.latitude != null && loc.longitude != null) {
+          setState(() {
+            _currentLocation = LatLng(loc.latitude!, loc.longitude!);
+            _isLoadingLocation = false;
+          });
+        }
+      },
+      onError: (e) {
+        setState(() => _isLoadingLocation = false);
+        debugPrint('❌ Erro de localização: $e');
+      },
+    );
   }
 
   void _listenIncendios() {
     debugPrint('🗺️ [Home] Iniciando stream de incêndios...');
-    _incendioService.streamIncendios().listen((incendios) {
-      debugPrint('🔥 [Home] Recebido ${incendios.length} incêndios');
-      setState(() {
-        _incendios = incendios;
-      });
-    }, onError: (e) {
-      debugPrint('❌ [Home] Erro no stream de incêndios: $e');
-    });
+    _incendioService.streamIncendios().listen(
+      (incendios) {
+        debugPrint('🔥 [Home] Recebido ${incendios.length} incêndios');
+        setState(() {
+          _incendios = incendios;
+        });
+      },
+      onError: (e) {
+        debugPrint('❌ [Home] Erro no stream de incêndios: $e');
+      },
+    );
   }
 
   void _mostrarDetalhesIncendio(IncendioModel inc, LatLng pontoToque) {
     debugPrint('📍 Dialog aberto para: ${inc.descricao}');
     debugPrint('🔍 [Dialog Debug] Descrição completa: "${inc.descricao}"');
-    debugPrint('🔍 [Dialog Debug] Foto URL (primeiros 100 chars): "${inc.fotoUrl?.substring(0, math.min(100, inc.fotoUrl?.length ?? 0)) ?? "null"}"');
-    debugPrint('🔍 [Dialog Debug] Tamanho Foto URL: ${inc.fotoUrl?.length ?? 0} bytes');
+    debugPrint(
+      '🔍 [Dialog Debug] Foto URL (primeiros 100 chars): "${inc.fotoUrl?.substring(0, math.min(100, inc.fotoUrl?.length ?? 0)) ?? "null"}"',
+    );
+    debugPrint(
+      '🔍 [Dialog Debug] Tamanho Foto URL: ${inc.fotoUrl?.length ?? 0} bytes',
+    );
     debugPrint('🔍 [Dialog Debug] Direção: ${inc.direcao}°');
     debugPrint('🔍 [Dialog Debug] Distância: ${inc.distanciaMetros}m');
-    
+
     // Formatar data/hora de forma legível
     DateTime dataHora = DateTime.parse(inc.criadoEm);
-    String dataFormatada = '${dataHora.day} de ${_getNomeMes(dataHora.month)}, ${dataHora.hour.toString().padLeft(2, '0')}:${dataHora.minute.toString().padLeft(2, '0')}';
-    
+    String dataFormatada =
+        '${dataHora.day} de ${_getNomeMes(dataHora.month)}, ${dataHora.hour.toString().padLeft(2, '0')}:${dataHora.minute.toString().padLeft(2, '0')}';
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Container(
             padding: const EdgeInsets.all(0),
             child: SingleChildScrollView(
@@ -115,18 +130,26 @@ class _HomePageScreenState extends State<HomePageScreen> {
                         builder: (context) {
                           try {
                             final decodedBytes = base64Decode(inc.fotoUrl!);
-                            debugPrint('✅ Foto decodificada com sucesso: ${decodedBytes.length} bytes');
+                            debugPrint(
+                              '✅ Foto decodificada com sucesso: ${decodedBytes.length} bytes',
+                            );
                             return Image.memory(
                               decodedBytes,
                               height: 250,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                debugPrint('❌ Erro ao exibir Image.memory: $error');
+                                debugPrint(
+                                  '❌ Erro ao exibir Image.memory: $error',
+                                );
                                 return Container(
                                   height: 250,
                                   color: Colors.grey.shade300,
                                   child: const Center(
-                                    child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 60,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 );
                               },
@@ -137,7 +160,11 @@ class _HomePageScreenState extends State<HomePageScreen> {
                               height: 250,
                               color: Colors.grey.shade300,
                               child: const Center(
-                                child: Icon(Icons.broken_image, size: 60, color: Colors.grey),
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
                               ),
                             );
                           }
@@ -148,7 +175,9 @@ class _HomePageScreenState extends State<HomePageScreen> {
                     Container(
                       height: 250,
                       decoration: BoxDecoration(
-                        color: _getCorPorRisco(inc.nivelRisco).withOpacity(0.2),
+                        color: _getCorPorRisco(
+                          inc.nivelRisco,
+                        ).withValues(alpha: 0.2),
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(16),
                           topRight: Radius.circular(16),
@@ -169,7 +198,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                  // Título com risco
+                        // Título com risco
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -189,9 +218,14 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: _getCorPorRisco(inc.nivelRisco).withOpacity(0.2),
+                                      color: _getCorPorRisco(
+                                        inc.nivelRisco,
+                                      ).withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -219,7 +253,11 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.calendar_today, size: 18, color: Colors.grey.shade700),
+                              Icon(
+                                Icons.calendar_today,
+                                size: 18,
+                                color: Colors.grey.shade700,
+                              ),
                               const SizedBox(width: 10),
                               Text(
                                 dataFormatada,
@@ -245,14 +283,21 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                     decoration: BoxDecoration(
                                       color: Colors.blue.shade50,
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: Colors.blue.shade200),
+                                      border: Border.all(
+                                        color: Colors.blue.shade200,
+                                      ),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            Icon(Icons.explore, size: 16, color: Colors.blue.shade700),
+                                            Icon(
+                                              Icons.explore,
+                                              size: 16,
+                                              color: Colors.blue.shade700,
+                                            ),
                                             const SizedBox(width: 6),
                                             Text(
                                               'Direção',
@@ -277,7 +322,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                     ),
                                   ),
                                 ),
-                              if (inc.direcao != null && inc.distanciaMetros != null)
+                              if (inc.direcao != null &&
+                                  inc.distanciaMetros != null)
                                 const SizedBox(width: 10),
                               if (inc.distanciaMetros != null)
                                 Expanded(
@@ -286,14 +332,21 @@ class _HomePageScreenState extends State<HomePageScreen> {
                                     decoration: BoxDecoration(
                                       color: Colors.orange.shade50,
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: Colors.orange.shade200),
+                                      border: Border.all(
+                                        color: Colors.orange.shade200,
+                                      ),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
-                                            Icon(Icons.straighten, size: 16, color: Colors.orange.shade700),
+                                            Icon(
+                                              Icons.straighten,
+                                              size: 16,
+                                              color: Colors.orange.shade700,
+                                            ),
                                             const SizedBox(width: 6),
                                             Text(
                                               'Distância',
@@ -354,11 +407,17 @@ class _HomePageScreenState extends State<HomePageScreen> {
                               const SizedBox(height: 6),
                               Text(
                                 'Lat: ${inc.latitude?.toStringAsFixed(6) ?? "N/A"}',
-                                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'monospace',
+                                ),
                               ),
                               Text(
                                 'Lng: ${inc.longitude?.toStringAsFixed(6) ?? "N/A"}',
-                                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'monospace',
+                                ),
                               ),
                             ],
                           ),
@@ -400,7 +459,20 @@ class _HomePageScreenState extends State<HomePageScreen> {
   }
 
   String _getNomeMes(int mes) {
-    const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+    const meses = [
+      'jan',
+      'fev',
+      'mar',
+      'abr',
+      'mai',
+      'jun',
+      'jul',
+      'ago',
+      'set',
+      'out',
+      'nov',
+      'dez',
+    ];
     return meses[mes - 1];
   }
 
@@ -424,8 +496,10 @@ class _HomePageScreenState extends State<HomePageScreen> {
       final xj = poly[j].latitude;
       final yj = poly[j].longitude;
 
-      final intersect = ((yi > tap.longitude) != (yj > tap.longitude)) &&
-          (tap.latitude < (xj - xi) * (tap.longitude - yi) / (yj - yi + 1e-12) + xi);
+      final intersect =
+          ((yi > tap.longitude) != (yj > tap.longitude)) &&
+          (tap.latitude <
+              (xj - xi) * (tap.longitude - yi) / (yj - yi + 1e-12) + xi);
       if (intersect) inside = !inside;
     }
     return inside;
@@ -481,49 +555,57 @@ class _HomePageScreenState extends State<HomePageScreen> {
                 polygons: _incendios
                     .where((inc) => inc.areaPoligono.isNotEmpty)
                     .map((inc) {
-                  final cor = _getCorPorRisco(inc.nivelRisco);
-                  return Polygon(
-                    points: inc.areaPoligono,
-                    color: cor.withOpacity(0.3),
-                    borderColor: cor,
-                    borderStrokeWidth: 2,
-                    isFilled: true,
-                  );
-                }).toList(),
+                      final cor = _getCorPorRisco(inc.nivelRisco);
+                      return Polygon(
+                        points: inc.areaPoligono,
+                        color: cor.withValues(alpha: 0.3),
+                        borderColor: cor,
+                        borderStrokeWidth: 2,
+                      );
+                    })
+                    .toList(),
               ),
 
               // Marcadores visíveis de incêndio (ícone de fogo)
               MarkerLayer(
                 markers: _incendios
-                    .where((inc) => inc.latitude != null && inc.longitude != null)
+                    .where(
+                      (inc) => inc.latitude != null && inc.longitude != null,
+                    )
                     .map((inc) {
-                  final cor = _getCorPorRisco(inc.nivelRisco);
-                  final centerPoint = LatLng(inc.latitude ?? 0, inc.longitude ?? 0);
-                  
-                  return Marker(
-                    point: centerPoint,
-                    width: 40,
-                    height: 40,
-                    child: GestureDetector(
-                      onTap: () {
-                        debugPrint('🔥 Marcador tocado! Abrindo detalhes do incêndio: ${inc.descricao}');
-                        _mostrarDetalhesIncendio(inc, centerPoint);
-                      },
-                      child: Icon(
-                        Icons.local_fire_department,
-                        color: cor,
-                        size: 36,
-                        shadows: [
-                          Shadow(
-                            offset: const Offset(0, 2),
-                            blurRadius: 4,
-                            color: Colors.black.withOpacity(0.5),
+                      final cor = _getCorPorRisco(inc.nivelRisco);
+                      final centerPoint = LatLng(
+                        inc.latitude ?? 0,
+                        inc.longitude ?? 0,
+                      );
+
+                      return Marker(
+                        point: centerPoint,
+                        width: 40,
+                        height: 40,
+                        child: GestureDetector(
+                          onTap: () {
+                            debugPrint(
+                              '🔥 Marcador tocado! Abrindo detalhes do incêndio: ${inc.descricao}',
+                            );
+                            _mostrarDetalhesIncendio(inc, centerPoint);
+                          },
+                          child: Icon(
+                            Icons.local_fire_department,
+                            color: cor,
+                            size: 36,
+                            shadows: [
+                              Shadow(
+                                offset: const Offset(0, 2),
+                                blurRadius: 4,
+                                color: Colors.black.withValues(alpha: 0.5),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
+                        ),
+                      );
+                    })
+                    .toList(),
               ),
             ],
           ),
@@ -552,7 +634,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
+                      color: Colors.black.withValues(alpha: 0.25),
                       blurRadius: 5,
                       offset: const Offset(0, 3),
                     ),
@@ -626,11 +708,10 @@ class _BottomButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const _BottomButton({
-    Key? key,
     required this.icon,
     required this.label,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
