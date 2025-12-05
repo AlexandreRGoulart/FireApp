@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../components/app_input.dart';
 import '../components/app_button.dart';
@@ -22,6 +23,163 @@ class _TelaCadastroState extends State<TelaCadastro> {
   final TextEditingController _senha = TextEditingController();
   final TextEditingController _confirmarSenha = TextEditingController();
 
+  bool _isLoading = false;
+  DateTime? _dataSelecionada;
+
+  @override
+  void dispose() {
+    _nome.dispose();
+    _email.dispose();
+    _dataNasc.dispose();
+    _cpf.dispose();
+    _senha.dispose();
+    _confirmarSenha.dispose();
+    super.dispose();
+  }
+
+  Future<void> _registrar() async {
+    final nome = _nome.text.trim();
+    final email = _email.text.trim();
+    final senha = _senha.text.trim();
+    final confirmar = _confirmarSenha.text.trim();
+    final cpf = _cpf.text.trim();
+
+    if (nome.isEmpty ||
+        email.isEmpty ||
+        senha.isEmpty ||
+        confirmar.isEmpty ||
+        _dataNasc.text.isEmpty ||
+        cpf.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preencha todos os campos obrigatórios'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_emailValido(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('E-mail inválido'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_dataSelecionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecione a data de nascimento'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_dataSelecionada!.isAfter(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data de nascimento não pode ser futura'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final idade = DateTime.now().difference(_dataSelecionada!).inDays ~/ 365;
+    if (idade < 13) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('É necessário ter pelo menos 13 anos'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final cpfErro = _validarCpf(cpf);
+    if (cpfErro != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(cpfErro), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (senha.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('A senha deve ter pelo menos 6 caracteres'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (senha != confirmar) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('As senhas não coincidem'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: senha,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cadastro realizado com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      String mensagem = 'Erro ao cadastrar';
+      if (e.code == 'email-already-in-use') {
+        mensagem = 'E-mail já está em uso';
+      } else if (e.code == 'invalid-email') {
+        mensagem = 'E-mail inválido';
+      } else if (e.code == 'weak-password') {
+        mensagem = 'Senha fraca, use ao menos 6 caracteres';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mensagem), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erro inesperado ao cadastrar'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,10 +192,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 /// LOGO
-                Image.asset(
-                  "assets/logo.png",
-                  width: 120,
-                ),
+                Image.asset("assets/logo.png", width: 120),
 
                 const SizedBox(height: 40),
 
@@ -63,9 +218,10 @@ class _TelaCadastroState extends State<TelaCadastro> {
                 /// DATA DE NASCIMENTO
                 AppInput(
                   label: "Data de Nascimento",
-                  hint: "Digite sua data de nascimento",
+                  hint: "Selecione no calendário",
                   controller: _dataNasc,
-                  keyboardType: TextInputType.datetime,
+                  readOnly: true,
+                  onTap: _selecionarData,
                 ),
 
                 const SizedBox(height: 18),
@@ -103,9 +259,8 @@ class _TelaCadastroState extends State<TelaCadastro> {
                 /// BOTÃO CADASTRAR (PRIMARY)
                 AppButton(
                   text: "Cadastrar",
-                  onPressed: () {
-                    // TODO: lógica de cadastro Firebase
-                  },
+                  onPressed: () => _registrar(),
+                  isDisabled: _isLoading,
                 ),
 
                 const SizedBox(height: 24),
@@ -131,7 +286,9 @@ class _TelaCadastroState extends State<TelaCadastro> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      backgroundColor: const Color(0xFFDDDDDD), // igual ao Figma
+                      backgroundColor: const Color(
+                        0xFFDDDDDD,
+                      ), // igual ao Figma
                     ),
                     onPressed: () {},
                     child: Row(
@@ -159,8 +316,7 @@ class _TelaCadastroState extends State<TelaCadastro> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Já possui uma conta ?",
-                        style: AppTextStyles.body),
+                    Text("Já possui uma conta ?", style: AppTextStyles.body),
                     const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () {
@@ -210,5 +366,63 @@ class _TelaCadastroState extends State<TelaCadastro> {
         ),
       ),
     );
+  }
+
+  bool _emailValido(String email) {
+    final regex = RegExp(r'^\S+@\S+\.\S+$');
+    return regex.hasMatch(email);
+  }
+
+  String? _validarCpf(String cpf) {
+    final numeros = cpf.replaceAll(RegExp(r'\D'), '');
+    if (numeros.length != 11) return 'CPF deve ter 11 dígitos';
+    if (RegExp(r'^(\d)\1{10}$').hasMatch(numeros)) return 'CPF inválido';
+
+    int calcularDigito(String base) {
+      var soma = 0;
+      for (var i = 0; i < base.length; i++) {
+        soma += int.parse(base[i]) * ((base.length + 1) - i);
+      }
+      final resto = soma % 11;
+      return resto < 2 ? 0 : 11 - resto;
+    }
+
+    final primeiroDigito = calcularDigito(numeros.substring(0, 9));
+    final segundoDigito = calcularDigito(
+      numeros.substring(0, 9) + primeiroDigito.toString(),
+    );
+
+    if (numeros[9] != primeiroDigito.toString() ||
+        numeros[10] != segundoDigito.toString()) {
+      return 'CPF inválido';
+    }
+
+    return null;
+  }
+
+  String _formatarData(DateTime data) {
+    final dia = data.day.toString().padLeft(2, '0');
+    final mes = data.month.toString().padLeft(2, '0');
+    final ano = data.year.toString();
+    return '$dia/$mes/$ano';
+  }
+
+  Future<void> _selecionarData() async {
+    final agora = DateTime.now();
+    final dataInicial = _dataSelecionada ?? DateTime(2000);
+    final selecionada = await showDatePicker(
+      context: context,
+      initialDate: dataInicial.isAfter(agora) ? agora : dataInicial,
+      firstDate: DateTime(1900),
+      lastDate: agora,
+      locale: const Locale('pt', 'BR'),
+    );
+
+    if (selecionada != null) {
+      setState(() {
+        _dataSelecionada = selecionada;
+        _dataNasc.text = _formatarData(selecionada);
+      });
+    }
   }
 }

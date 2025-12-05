@@ -8,6 +8,8 @@ class AppInput extends StatelessWidget {
   final TextEditingController controller;
   final bool obscure;
   final TextInputType keyboardType;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const AppInput({
     super.key,
@@ -16,6 +18,8 @@ class AppInput extends StatelessWidget {
     required this.controller,
     this.obscure = false,
     this.keyboardType = TextInputType.text,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -33,6 +37,8 @@ class AppInput extends StatelessWidget {
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          onTap: onTap,
           style: AppTextStyles.body, // texto branco
           decoration: InputDecoration(
             hintText: hint,

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import '../model/incendio_model.dart';
 
 class IncendioService {
@@ -13,14 +14,16 @@ class IncendioService {
   Future<String> salvarIncendio(IncendioModel incendio) async {
     try {
       final usuarioId = _auth.currentUser?.uid;
-      print('🔥 Salvando incêndio - Usuário ID: $usuarioId');
-      
+      debugPrint('🔥 Salvando incêndio - Usuário ID: $usuarioId');
+
       if (usuarioId == null) {
-        throw Exception('Usuário não autenticado. Faça login antes de registrar um incêndio.');
+        throw Exception(
+          'Usuário não autenticado. Faça login antes de registrar um incêndio.',
+        );
       }
 
-      print('📤 Enviando para Realtime Database no nó "$collection"...');
-      
+      debugPrint('📤 Enviando para Realtime Database no nó "$collection"...');
+
       final docData = {
         'descricao': incendio.descricao,
         'nivelRisco': incendio.nivelRisco,
@@ -36,15 +39,15 @@ class IncendioService {
         'fotoUrl': incendio.fotoUrl,
       };
 
-      print('📋 Dados a enviar: $docData');
-      
+      debugPrint('📋 Dados a enviar: $docData');
+
       final ref = _database.ref(collection).push();
       await ref.set(docData);
       final id = ref.key ?? '';
-      print('✅ Incêndio salvo com sucesso! ID: $id');
+      debugPrint('✅ Incêndio salvo com sucesso! ID: $id');
       return id;
     } catch (e) {
-      print('❌ Erro ao salvar incêndio: $e');
+      debugPrint('❌ Erro ao salvar incêndio: $e');
       rethrow;
     }
   }
@@ -58,14 +61,14 @@ class IncendioService {
       list.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
       return list;
     } catch (e) {
-      print('❌ Erro ao listar incêndios: $e');
+      debugPrint('❌ Erro ao listar incêndios: $e');
       throw Exception('Erro ao listar incêndios: $e');
     }
   }
 
   /// Listar incêndios em tempo real (stream) - SEM ORDENAÇÃO para evitar erro
   Stream<List<IncendioModel>> streamIncendios() {
-    print('📡 [IncendioService] Stream aberto para nó "incendios" (RTDB)');
+    debugPrint('📡 [IncendioService] Stream aberto para nó "incendios" (RTDB)');
     return _database
         .ref(collection)
         .onValue
@@ -73,14 +76,18 @@ class IncendioService {
           final list = _mapSnapshotToList(event.snapshot);
           // Ordenar em memória por data (mais recente primeiro)
           list.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
-          print('📊 [IncendioService] Snapshot recebido com ${list.length} incêndios');
+          debugPrint(
+            '📊 [IncendioService] Snapshot recebido com ${list.length} incêndios',
+          );
           for (final inc in list) {
-            print('   📍 ${inc.descricao} | Risco: ${inc.nivelRisco} | Polígono: ${inc.areaPoligono.length} pts');
+            debugPrint(
+              '   📍 ${inc.descricao} | Risco: ${inc.nivelRisco} | Polígono: ${inc.areaPoligono.length} pts',
+            );
           }
           return list;
         })
         .handleError((e) {
-          print('❌ [IncendioService] ERRO no stream: $e');
+          debugPrint('❌ [IncendioService] ERRO no stream: $e');
         });
   }
 
@@ -99,21 +106,19 @@ class IncendioService {
   /// Atualizar incêndio
   Future<void> atualizarIncendio(String id, IncendioModel incendio) async {
     try {
-      await _database.ref('$collection/$id').update(
-        {
-          'descricao': incendio.descricao,
-          'nivelRisco': incendio.nivelRisco,
-          'areaPoligono': incendio.areaPoligono
-              .map((e) => {'latitude': e.latitude, 'longitude': e.longitude})
-              .toList(),
-          'latitude': incendio.latitude ?? 0.0,
-          'longitude': incendio.longitude ?? 0.0,
-          'direcao': incendio.direcao,
-          'distanciaMetros': incendio.distanciaMetros,
-          'atualizado': ServerValue.timestamp,
-          'fotoUrl': incendio.fotoUrl,
-        },
-      );
+      await _database.ref('$collection/$id').update({
+        'descricao': incendio.descricao,
+        'nivelRisco': incendio.nivelRisco,
+        'areaPoligono': incendio.areaPoligono
+            .map((e) => {'latitude': e.latitude, 'longitude': e.longitude})
+            .toList(),
+        'latitude': incendio.latitude ?? 0.0,
+        'longitude': incendio.longitude ?? 0.0,
+        'direcao': incendio.direcao,
+        'distanciaMetros': incendio.distanciaMetros,
+        'atualizado': ServerValue.timestamp,
+        'fotoUrl': incendio.fotoUrl,
+      });
     } catch (e) {
       throw Exception('Erro ao atualizar incêndio: $e');
     }
@@ -137,13 +142,13 @@ class IncendioService {
       }
 
       final snapshot = await _database.ref(collection).get();
-      final list = _mapSnapshotToList(snapshot)
-          .where((inc) => inc.criadoPor == usuarioId)
-          .toList();
+      final list = _mapSnapshotToList(
+        snapshot,
+      ).where((inc) => inc.criadoPor == usuarioId).toList();
       list.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
       return list;
     } catch (e) {
-      print('❌ Erro ao listar meus incêndios: $e');
+      debugPrint('❌ Erro ao listar meus incêndios: $e');
       throw Exception('Erro ao listar meus incêndios: $e');
     }
   }
@@ -151,13 +156,13 @@ class IncendioService {
   /// Stream de incêndios do usuário atual
   Stream<List<IncendioModel>> streamMeusIncendios() {
     final usuarioId = _auth.currentUser?.uid;
-    print('👤 Stream Meus Alertas - Usuário ID: $usuarioId');
-    
+    debugPrint('👤 Stream Meus Alertas - Usuário ID: $usuarioId');
+
     if (usuarioId == null) {
-      print('⚠️ Usuário não autenticado para stream');
+      debugPrint('⚠️ Usuário não autenticado para stream');
       return Stream.error('Usuário não autenticado');
     }
-    
+
     return _database
         .ref(collection)
         .onValue
@@ -167,11 +172,11 @@ class IncendioService {
               .where((inc) => inc.criadoPor == usuarioId)
               .toList();
           meusList.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
-          print('📊 [IncendioService] Meus incêndios: ${meusList.length}');
+          debugPrint('📊 [IncendioService] Meus incêndios: ${meusList.length}');
           return meusList;
         })
         .handleError((e) {
-          print('❌ Erro no stream de meus incêndios: $e');
+          debugPrint('❌ Erro no stream de meus incêndios: $e');
         });
   }
 
@@ -181,25 +186,31 @@ class IncendioService {
     for (var child in snapshot.children) {
       try {
         final data = _normalizeMap(child.value);
-        
+
         // Log da foto se existir
         if (data['fotoUrl'] != null) {
           final fotoSize = (data['fotoUrl'] as String).length;
-          print('📸 [IncendioService] Incêndio ${child.key}: Foto encontrada (${(fotoSize / 1024).toStringAsFixed(2)} KB)');
+          debugPrint(
+            '📸 [IncendioService] Incêndio ${child.key}: Foto encontrada (${(fotoSize / 1024).toStringAsFixed(2)} KB)',
+          );
         } else {
-          print('📸 [IncendioService] Incêndio ${child.key}: Sem foto (null)');
+          debugPrint(
+            '📸 [IncendioService] Incêndio ${child.key}: Sem foto (null)',
+          );
         }
-        
+
         final incendio = IncendioModel.fromMap(child.key ?? '', data);
         list.add(incendio);
       } catch (e) {
-        print('⚠️ [IncendioService] Erro ao parsear incêndio ${child.key}: $e');
+        debugPrint(
+          '⚠️ [IncendioService] Erro ao parsear incêndio ${child.key}: $e',
+        );
       }
     }
     return list;
   }
 
-  /// Normalizar map do Firebase (converte Object para Map<String, dynamic>)
+  /// Normalizar map do Firebase (converte Object para `Map<String, dynamic>`)
   Map<String, dynamic> _normalizeMap(dynamic raw) {
     if (raw is Map) {
       return raw.map((key, value) => MapEntry(key.toString(), value));

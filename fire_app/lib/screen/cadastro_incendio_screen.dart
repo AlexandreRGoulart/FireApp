@@ -99,7 +99,7 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
 
     // Ouvir bússola por 3 segundos e pegar última leitura
     Stream<CompassEvent>? compassStream = FlutterCompass.events;
-    
+
     if (compassStream == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -113,28 +113,36 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
       return;
     }
 
-    compassStream.take(15).listen((event) {
-      setState(() {
-        _direcaoBussola = event.heading;
-      });
-    }).onDone(() {
-      setState(() {
-        _capturandoDirecao = false;
-      });
-      if (_direcaoBussola != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✓ Direção capturada: ${_direcaoBussola!.toStringAsFixed(0)}°'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    });
+    compassStream
+        .take(15)
+        .listen((event) {
+          setState(() {
+            _direcaoBussola = event.heading;
+          });
+        })
+        .onDone(() {
+          setState(() {
+            _capturandoDirecao = false;
+          });
+          if (!mounted) return;
+          if (_direcaoBussola != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '✓ Direção capturada: ${_direcaoBussola!.toStringAsFixed(0)}°',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        });
   }
 
   // Calcular coordenadas do incêndio baseado em posição atual + direção + distância
   LatLng? _calcularCoordenadas() {
-    if (_currentLocation == null || _direcaoBussola == null || distanciaController.text.isEmpty) {
+    if (_currentLocation == null ||
+        _direcaoBussola == null ||
+        distanciaController.text.isEmpty) {
       return null;
     }
 
@@ -151,13 +159,19 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     // Fórmula haversine para calcular novo ponto
     final lat2 = math.asin(
       math.sin(lat1) * math.cos(distanciaKm / raioTerra) +
-      math.cos(lat1) * math.sin(distanciaKm / raioTerra) * math.cos(bearing)
+          math.cos(lat1) *
+              math.sin(distanciaKm / raioTerra) *
+              math.cos(bearing),
     );
 
-    final lng2 = lng1 + math.atan2(
-      math.sin(bearing) * math.sin(distanciaKm / raioTerra) * math.cos(lat1),
-      math.cos(distanciaKm / raioTerra) - math.sin(lat1) * math.sin(lat2)
-    );
+    final lng2 =
+        lng1 +
+        math.atan2(
+          math.sin(bearing) *
+              math.sin(distanciaKm / raioTerra) *
+              math.cos(lat1),
+          math.cos(distanciaKm / raioTerra) - math.sin(lat1) * math.sin(lat2),
+        );
 
     return LatLng(lat2 * 180 / math.pi, lng2 * 180 / math.pi);
   }
@@ -169,21 +183,27 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     try {
       debugPrint('⏳ Convertendo foto para Base64...');
       debugPrint('📁 Arquivo: ${_fotoSelecionada!.path}');
-      
+
       final bytes = await _fotoSelecionada!.readAsBytes();
       final tamanhoOriginal = bytes.length;
-      debugPrint('📊 Tamanho original: ${(tamanhoOriginal / 1024).toStringAsFixed(2)} KB');
+      debugPrint(
+        '📊 Tamanho original: ${(tamanhoOriginal / 1024).toStringAsFixed(2)} KB',
+      );
 
       // Limitar tamanho para não sobrecarregar o RTDB (max ~100KB recomendado)
       if (tamanhoOriginal > 150 * 1024) {
-        debugPrint('⚠️ Foto muito grande (${(tamanhoOriginal / 1024).toStringAsFixed(2)} KB), comprimindo...');
+        debugPrint(
+          '⚠️ Foto muito grande (${(tamanhoOriginal / 1024).toStringAsFixed(2)} KB), comprimindo...',
+        );
         // Aqui você pode adicionar compressão se necessário
         // Por ora, vamos aceitar e avisar
       }
 
       final base64String = base64Encode(bytes);
-      debugPrint('✅ Foto convertida para Base64: ${(base64String.length / 1024).toStringAsFixed(2)} KB');
-      
+      debugPrint(
+        '✅ Foto convertida para Base64: ${(base64String.length / 1024).toStringAsFixed(2)} KB',
+      );
+
       return base64String;
     } catch (e) {
       debugPrint('❌ Erro ao converter foto: $e');
@@ -197,6 +217,8 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
       context,
       MaterialPageRoute(builder: (_) => const AdicionarMapaScreen()),
     );
+
+    if (!mounted) return;
 
     if (resultado != null && resultado is List<LatLng>) {
       setState(() {
@@ -213,7 +235,9 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         distanciaController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("❌ Preencha todos os campos, capture a direção e desenhe a área."),
+          content: Text(
+            "❌ Preencha todos os campos, capture a direção e desenhe a área.",
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -227,8 +251,10 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
     try {
       // Verificar autenticação
       final user = FirebaseAuth.instance.currentUser;
-      debugPrint('👤 [CadastroIncendio] Verificando autenticação - Usuário: ${user?.uid ?? "NÃO AUTENTICADO"}');
-      
+      debugPrint(
+        '👤 [CadastroIncendio] Verificando autenticação - Usuário: ${user?.uid ?? "NÃO AUTENTICADO"}',
+      );
+
       if (user == null) {
         throw Exception('❌ Você não está autenticado. Faça login primeiro.');
       }
@@ -241,7 +267,9 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         try {
           fotoBase64 = await _converterFotoBase64();
           if (fotoBase64 == null) {
-            debugPrint('⚠️ AVISO: Foto não foi convertida, continuando sem foto');
+            debugPrint(
+              '⚠️ AVISO: Foto não foi convertida, continuando sem foto',
+            );
           }
         } catch (e) {
           debugPrint('⚠️ ERRO na conversão de foto, salvando sem foto: $e');
@@ -254,21 +282,25 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
       // Calcular coordenadas do incêndio
       debugPrint('📍 [CadastroIncendio] Calculando coordenadas...');
       final coordenadasIncendio = _calcularCoordenadas();
-      
+
       if (coordenadasIncendio == null) {
         throw Exception('Erro ao calcular coordenadas do incêndio');
       }
 
-      debugPrint('✅ [CadastroIncendio] Coordenadas calculadas: $coordenadasIncendio');
+      debugPrint(
+        '✅ [CadastroIncendio] Coordenadas calculadas: $coordenadasIncendio',
+      );
       debugPrint('🔥 [CadastroIncendio] Iniciando salvamento do incêndio...');
-      debugPrint('📍 Localização usuário: ${_currentLocation}');
+      debugPrint('📍 Localização usuário: $_currentLocation');
       debugPrint('📍 Localização incêndio: $coordenadasIncendio');
-      debugPrint('🧭 Direção: ${_direcaoBussola}°');
+      debugPrint('🧭 Direção: $_direcaoBussola°');
       debugPrint('📏 Distância: ${distanciaController.text}m');
       debugPrint('🗺️ Polígono com ${areaPoligono.length} pontos');
-      debugPrint('📸 Foto Base64: ${fotoBase64 != null ? "✅ Convertida (${(fotoBase64.length / 1024).toStringAsFixed(2)} KB)" : "❌ Sem foto"}');
+      debugPrint(
+        '📸 Foto Base64: ${fotoBase64 != null ? "✅ Convertida (${(fotoBase64.length / 1024).toStringAsFixed(2)} KB)" : "❌ Sem foto"}',
+      );
       debugPrint('👤 Usuário ID: ${user.uid}');
-      
+
       debugPrint('🔨 [CadastroIncendio] Criando modelo do incêndio...');
       final incendio = IncendioModel(
         descricao: descricaoController.text,
@@ -282,20 +314,28 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
         distanciaMetros: double.parse(distanciaController.text),
       );
 
-      debugPrint('📝 [CadastroIncendio] Incêndio criado: ${incendio.descricao}');
-      debugPrint('📝 [CadastroIncendio] Campo fotoUrl: ${incendio.fotoUrl != null ? "PREENCHIDO (${(incendio.fotoUrl!.length / 1024).toStringAsFixed(2)} KB)" : "NULL"}');
-      
+      debugPrint(
+        '📝 [CadastroIncendio] Incêndio criado: ${incendio.descricao}',
+      );
+      debugPrint(
+        '📝 [CadastroIncendio] Campo fotoUrl: ${incendio.fotoUrl != null ? "PREENCHIDO (${(incendio.fotoUrl!.length / 1024).toStringAsFixed(2)} KB)" : "NULL"}',
+      );
+
       debugPrint('💾 [CadastroIncendio] Salvando no banco de dados...');
       final id = await _incendioService.salvarIncendio(incendio);
-      
+
       debugPrint('✅ [CadastroIncendio] Incêndio salvo com ID: $id');
-      debugPrint('✅ [CadastroIncendio] Foto Base64 salva no banco: ${incendio.fotoUrl != null ? "SIM" : "NÃO"}');
+      debugPrint(
+        '✅ [CadastroIncendio] Foto Base64 salva no banco: ${incendio.fotoUrl != null ? "SIM" : "NÃO"}',
+      );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("✓ Incêndio registrado com sucesso!\nAtualizando mapa..."),
+          content: Text(
+            "✓ Incêndio registrado com sucesso!\nAtualizando mapa...",
+          ),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
@@ -303,6 +343,8 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
 
       // Aguardar um pouco para sincronizar
       await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
 
       // Limpar formulário
       descricaoController.clear();
@@ -336,7 +378,7 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
   @override
   Widget build(BuildContext context) {
     final coordenadasCalculadas = _calcularCoordenadas();
-    
+
     return Scaffold(
       backgroundColor: AppColors.primary,
       body: SafeArea(
@@ -388,32 +430,49 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                       Container(
                         height: 200,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: _fotoSelecionada == null
                             ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.camera_alt, size: 50, color: Colors.white.withOpacity(0.5)),
+                                    Icon(
+                                      Icons.camera_alt,
+                                      size: 50,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
                                     const SizedBox(height: 8),
                                     Text(
                                       'Nenhuma foto capturada',
-                                      style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
                               )
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.file(_fotoSelecionada!, fit: BoxFit.cover),
+                                child: Image.file(
+                                  _fotoSelecionada!,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                       ),
                       const SizedBox(height: 12),
                       AppButton(
-                        text: _fotoSelecionada == null ? "📸 Capturar Foto" : "📸 Trocar Foto",
+                        text: _fotoSelecionada == null
+                            ? "📸 Capturar Foto"
+                            : "📸 Trocar Foto",
                         outlined: true,
                         onPressed: _capturarFoto,
                       ),
@@ -423,9 +482,11 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Column(
                           children: [
@@ -434,14 +495,20 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                               children: [
                                 Text(
                                   '🧭 Direção:',
-                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 Text(
-                                  _direcaoBussola == null 
-                                      ? 'Não capturada' 
+                                  _direcaoBussola == null
+                                      ? 'Não capturada'
                                       : '${_direcaoBussola!.toStringAsFixed(0)}°',
                                   style: TextStyle(
-                                    color: _direcaoBussola == null ? Colors.orange : Colors.greenAccent,
+                                    color: _direcaoBussola == null
+                                        ? Colors.orange
+                                        : Colors.greenAccent,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -451,7 +518,10 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'Aponte o celular na direção do incêndio',
-                              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                fontSize: 12,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -459,9 +529,13 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                       ),
                       const SizedBox(height: 12),
                       AppButton(
-                        text: _capturandoDirecao ? "⏳ Capturando..." : "🧭 Capturar Direção",
+                        text: _capturandoDirecao
+                            ? "⏳ Capturando..."
+                            : "🧭 Capturar Direção",
                         outlined: true,
-                        onPressed: _capturandoDirecao ? () {} : _capturarDirecao,
+                        onPressed: _capturandoDirecao
+                            ? () {}
+                            : _capturarDirecao,
                       ),
                       const SizedBox(height: 20),
 
@@ -472,13 +546,13 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                         controller: distanciaController,
                         keyboardType: TextInputType.number,
                       ),
-                      
+
                       if (coordenadasCalculadas != null) ...[
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
+                            color: Colors.green.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.greenAccent),
                           ),
@@ -487,39 +561,50 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
                             children: [
                               Text(
                                 '📍 Coordenadas calculadas do incêndio:',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Lat: ${coordenadasCalculadas.latitude.toStringAsFixed(6)}',
-                                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 11,
+                                ),
                               ),
                               Text(
                                 'Lng: ${coordenadasCalculadas.longitude.toStringAsFixed(6)}',
-                                style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11),
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       ],
-                      
+
                       const SizedBox(height: 20),
 
                       /// 🗺️ Botão desenhar área
                       AppButton(
-                        text: areaPoligono.isEmpty 
-                            ? "🗺️ Desenhar área no mapa" 
+                        text: areaPoligono.isEmpty
+                            ? "🗺️ Desenhar área no mapa"
                             : "🗺️ Área desenhada (${areaPoligono.length} pontos)",
                         outlined: true,
                         onPressed: _abrirMapaDesenho,
                       ),
-                      
+
                       const SizedBox(height: 20),
 
                       /// 🔴 Salvar
                       AppButton(
                         text: isSaving ? "⏳ Salvando..." : "✓ Salvar incêndio",
-                        onPressed: (descricaoController.text.isNotEmpty &&
+                        onPressed:
+                            (descricaoController.text.isNotEmpty &&
                                 areaPoligono.isNotEmpty &&
                                 _direcaoBussola != null &&
                                 distanciaController.text.isNotEmpty &&

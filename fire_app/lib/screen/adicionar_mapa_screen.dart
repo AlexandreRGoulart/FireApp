@@ -127,7 +127,7 @@ class _AdicionarMapaScreenState extends State<AdicionarMapaScreen> {
             points: polygonPoints,
             borderColor: Colors.red,
             borderStrokeWidth: 3,
-            color: Colors.red.withOpacity(0.3),
+            color: Colors.red.withValues(alpha: 0.3),
           ),
       ],
     );
