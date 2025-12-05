@@ -29,6 +29,8 @@ class IncendioService {
             .toList(),
         'latitude': incendio.latitude ?? 0.0,
         'longitude': incendio.longitude ?? 0.0,
+        'direcao': incendio.direcao,
+        'distanciaMetros': incendio.distanciaMetros,
         'criadoPor': usuarioId,
         'criadoEm': ServerValue.timestamp,
         'fotoUrl': incendio.fotoUrl,
@@ -72,32 +74,32 @@ class IncendioService {
           // Ordenar em memória por data (mais recente primeiro)
           list.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
           print('📊 [IncendioService] Snapshot recebido com ${list.length} incêndios');
-          list.forEach((inc) {
+          for (final inc in list) {
             print('   📍 ${inc.descricao} | Risco: ${inc.nivelRisco} | Polígono: ${inc.areaPoligono.length} pts');
-          });
+          }
           return list;
         })
         .handleError((e) {
-          print('❌ [IncendioService] ERRO no stream: \$e');
+          print('❌ [IncendioService] ERRO no stream: $e');
         });
   }
 
   /// Obter incêndio por ID
   Future<IncendioModel?> obterIncendio(String id) async {
     try {
-      final doc = await _database.ref('\$collection/\$id').get();
+      final doc = await _database.ref('$collection/$id').get();
       if (!doc.exists) return null;
       final data = _normalizeMap(doc.value);
       return IncendioModel.fromMap(doc.key ?? '', data);
     } catch (e) {
-      throw Exception('Erro ao obter incêndio: \$e');
+      throw Exception('Erro ao obter incêndio: $e');
     }
   }
 
   /// Atualizar incêndio
   Future<void> atualizarIncendio(String id, IncendioModel incendio) async {
     try {
-      await _database.ref('\$collection/\$id').update(
+      await _database.ref('$collection/$id').update(
         {
           'descricao': incendio.descricao,
           'nivelRisco': incendio.nivelRisco,
@@ -106,21 +108,23 @@ class IncendioService {
               .toList(),
           'latitude': incendio.latitude ?? 0.0,
           'longitude': incendio.longitude ?? 0.0,
+          'direcao': incendio.direcao,
+          'distanciaMetros': incendio.distanciaMetros,
           'atualizado': ServerValue.timestamp,
           'fotoUrl': incendio.fotoUrl,
         },
       );
     } catch (e) {
-      throw Exception('Erro ao atualizar incêndio: \$e');
+      throw Exception('Erro ao atualizar incêndio: $e');
     }
   }
 
   /// Deletar incêndio
   Future<void> deletarIncendio(String id) async {
     try {
-      await _database.ref('\$collection/\$id').remove();
+      await _database.ref('$collection/$id').remove();
     } catch (e) {
-      throw Exception('Erro ao deletar incêndio: \$e');
+      throw Exception('Erro ao deletar incêndio: $e');
     }
   }
 
@@ -139,15 +143,15 @@ class IncendioService {
       list.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
       return list;
     } catch (e) {
-      print('❌ Erro ao listar meus incêndios: \$e');
-      throw Exception('Erro ao listar meus incêndios: \$e');
+      print('❌ Erro ao listar meus incêndios: $e');
+      throw Exception('Erro ao listar meus incêndios: $e');
     }
   }
 
   /// Stream de incêndios do usuário atual
   Stream<List<IncendioModel>> streamMeusIncendios() {
     final usuarioId = _auth.currentUser?.uid;
-    print('👤 Stream Meus Alertas - Usuário ID: \$usuarioId');
+    print('👤 Stream Meus Alertas - Usuário ID: $usuarioId');
     
     if (usuarioId == null) {
       print('⚠️ Usuário não autenticado para stream');
@@ -163,11 +167,11 @@ class IncendioService {
               .where((inc) => inc.criadoPor == usuarioId)
               .toList();
           meusList.sort((a, b) => b.criadoEm.compareTo(a.criadoEm));
-          print('📊 [IncendioService] Meus incêndios: \${meusList.length}');
+          print('📊 [IncendioService] Meus incêndios: ${meusList.length}');
           return meusList;
         })
         .handleError((e) {
-          print('❌ Erro no stream de meus incêndios: \$e');
+          print('❌ Erro no stream de meus incêndios: $e');
         });
   }
 
@@ -177,10 +181,19 @@ class IncendioService {
     for (var child in snapshot.children) {
       try {
         final data = _normalizeMap(child.value);
+        
+        // Log da foto se existir
+        if (data['fotoUrl'] != null) {
+          final fotoSize = (data['fotoUrl'] as String).length;
+          print('📸 [IncendioService] Incêndio ${child.key}: Foto encontrada (${(fotoSize / 1024).toStringAsFixed(2)} KB)');
+        } else {
+          print('📸 [IncendioService] Incêndio ${child.key}: Sem foto (null)');
+        }
+        
         final incendio = IncendioModel.fromMap(child.key ?? '', data);
         list.add(incendio);
       } catch (e) {
-        print('⚠️ [IncendioService] Erro ao parsear incêndio \${child.key}: \$e');
+        print('⚠️ [IncendioService] Erro ao parsear incêndio ${child.key}: $e');
       }
     }
     return list;

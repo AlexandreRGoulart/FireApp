@@ -6,12 +6,6 @@ import '../core/navigation/app_routes.dart';
 class TelaInicialAcao extends StatelessWidget {
   const TelaInicialAcao({super.key});
 
-  void _emDesenvolvimento(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Funcionalidade em desenvolvimento")),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,7 +93,6 @@ class _MenuCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _MenuCard({
-    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,

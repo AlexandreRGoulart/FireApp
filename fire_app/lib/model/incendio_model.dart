@@ -10,6 +10,8 @@ class IncendioModel {
   final double? latitude;
   final double? longitude;
   final String? fotoUrl;
+  final double? direcao; // Direção da bússola em graus
+  final double? distanciaMetros; // Distância do incêndio em metros
 
   IncendioModel({
     this.id,
@@ -21,6 +23,8 @@ class IncendioModel {
     this.latitude,
     this.longitude,
     this.fotoUrl,
+    this.direcao,
+    this.distanciaMetros,
   });
 
   // Converter para Map para salvar no Firestore
@@ -36,6 +40,8 @@ class IncendioModel {
       'latitude': latitude,
       'longitude': longitude,
       'fotoUrl': fotoUrl,
+      'direcao': direcao,
+      'distanciaMetros': distanciaMetros,
     };
   }
 
@@ -61,6 +67,8 @@ class IncendioModel {
       latitude: (map['latitude'] as num?)?.toDouble(),
       longitude: (map['longitude'] as num?)?.toDouble(),
       fotoUrl: map['fotoUrl'],
+      direcao: (map['direcao'] as num?)?.toDouble(),
+      distanciaMetros: (map['distanciaMetros'] as num?)?.toDouble(),
     );
   }
 
