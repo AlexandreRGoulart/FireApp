@@ -14,6 +14,7 @@ import '../components/app_button.dart';
 import '../components/app_input.dart';
 import '../database/incendio_service.dart';
 import '../model/incendio_model.dart';
+import '../core/notifications/notification_service.dart';
 import 'adicionar_mapa_screen.dart';
 
 class CadastroIncendioScreen extends StatefulWidget {
@@ -340,6 +341,23 @@ class _CadastroIncendioScreenState extends State<CadastroIncendioScreen> {
           duration: Duration(seconds: 3),
         ),
       );
+
+      // 🔔 Disparar notificação imediata de proximidade
+      if (_currentLocation != null) {
+        final distanciaKm = math.sqrt(
+          math.pow(_currentLocation!.latitude - coordenadasIncendio.latitude, 2) +
+          math.pow(_currentLocation!.longitude - coordenadasIncendio.longitude, 2)
+        ) * 111; // Aproximação: 1 grau ≈ 111km
+        
+        if (distanciaKm <= 5) {
+          debugPrint('🔔 [CadastroIncendio] Incêndio está a ${distanciaKm.toStringAsFixed(1)} km - Enviando notificação imediata');
+          NotificationService.showNearbyIncendio(
+            id: id,
+            titulo: '🔥 Incêndio Registrado Perto de Você!',
+            corpo: '${descricaoController.text} • ${distanciaKm.toStringAsFixed(1)} km de distância',
+          );
+        }
+      }
 
       // Aguardar um pouco para sincronizar
       await Future.delayed(const Duration(seconds: 1));
