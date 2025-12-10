@@ -136,21 +136,30 @@ class _InfoCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: Colors.black, size: 32),
           const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyBold.copyWith(fontSize: 14),
+          Flexible(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodyBold.copyWith(fontSize: 14),
+            ),
           ),
           const SizedBox(height: 6),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.small.copyWith(
-              fontSize: 12,
-              color: Colors.black87,
+          Flexible(
+            child: Text(
+              description,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.small.copyWith(
+                fontSize: 12,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
