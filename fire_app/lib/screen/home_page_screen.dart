@@ -344,6 +344,17 @@ class _HomePageScreenState extends State<HomePageScreen> {
             );
           });
 
+          // Garante que o mapa esteja centralizado no incêndio selecionado
+          // para que as zonas apareçam ao redor do foco
+          try {
+            mapController.move(
+              LatLng(propagationData.centerLat, propagationData.centerLng),
+              mapController.camera.zoom,
+            );
+          } catch (e) {
+            debugPrint('⚠️ Erro ao recentralizar mapa: $e');
+          }
+
           debugPrint(
             '🔥 Zonas de propagação calculadas: ${propagationData.zones.length} zonas',
           );
@@ -921,8 +932,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Limpa polígonos ao fechar
-                              setState(() => _propagationPolygons = []);
                               Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
